@@ -75,6 +75,13 @@ class LocalBP(BranchPredictor):
     localPredictorSize = Param.Unsigned(2048, "Size of local predictor")
     localCtrBits = Param.Unsigned(2, "Bits per counter")
 
+class SrnnBP(BranchPredictor):
+    type = 'SrnnBP'
+    cxx_class = 'gem5::branch_prediction::SrnnBP'
+    cxx_header = "cpu/pred/srnn.hh"
+
+    localGHRSize = Param.Unsigned(32, "Number of previous branch outcomes in the Global History Registers")
+    localPHTSize = Param.Unsigned(512, "Number of Pattern History Table Entries.")
 
 class TournamentBP(BranchPredictor):
     type = 'TournamentBP'
