@@ -225,7 +225,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    uint64_t local_predictor_idx = (branch_addr >> 2) & PHT_index_mask;
+    uint64_t local_predictor_idx = (pc >> 2) & PHT_index_mask;
 
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
     std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
