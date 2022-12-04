@@ -159,6 +159,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     history->prediction = taken;
     history->yValue = predictionValue;
     history->globalHistoryReg = GHR;
+    history->unconditionalBranch = false;
 
     unsigned takenValue = (taken) ? 1 : 0;
     //Update the GHR based on the taken value or not.
@@ -174,22 +175,25 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget)
 {
     DPRINTF(SrnnBPDB, "Entering Update\r\n");
-    if(firstPrediction)
-    {
-        assert(bp_history == NULL);
-        BPHistory *history = static_cast<BPHistory*>(bp_history);
-    
-        unsigned takenValue = (taken) ? 1 : 0;
-        DPRINTF(SrnnBPDB, "Entering If\r\n");
-        // If the taken value was invalid, restore the GHR and commit the correct value.
-        if (squashed) {
-            GHR = (history->globalHistoryReg << 1) | takenValue;
-            return;
-        }
-        updatePHT(branch_addr, bp_history, taken);
-        updateGHR(taken);
+    assert(bp_history == NULL);
+    BPHistory *history = static_cast<BPHistory*>(bp_history);
+
+    DPRINTF(SrnnBPDB, "Entering If\r\n");
+    if (history->unconditionalBranch) {
+        delete history;
+        return;
     }
-    
+
+    DPRINTF(SrnnBPDB, "Entering squashed\r\n");
+    // If the taken value was invalid, restore the GHR and commit the correct value.
+    if (squashed) {
+        unsigned takenValue = (taken) ? 1 : 0;
+        GHR = (history->globalHistoryReg << 1) | takenValue;
+            return;
+    }
+
+    updatePHT(branch_addr, bp_history, taken);
+    updateGHR(taken);    
     DPRINTF(SrnnBPDB, "Exiting Update\r\n");
 }
 
@@ -256,6 +260,16 @@ void
 SrnnBP::uncondBranch(ThreadID tid, Addr pc, void *&bp_history)
 {
     //Unconditional Branches are ignored.
+    DPRINTF(SrnnBPDB, "Entering unconditional Branch\r\n");
+    BPHistory *history = new BPHistory();
+    bp_history = (void *)history;
+
+    history->prediction = taken;
+    history->yValue = predictionValue;
+    history->globalHistoryReg = GHR;
+    history->unconditionalBranch = true;
+
+    DPRINTF(SrnnBPDB, "Exiting unconditional Branch\r\n");
 }
 
 } // namespace branch_prediction

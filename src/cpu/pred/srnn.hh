@@ -106,15 +106,20 @@ class SrnnBP : public BPredUnit
     {
         unsigned globalHistoryReg;
         
+        
+
+        /** The Result of the SRNN network
+        */
+        int64_t yValue;
+        
         /** Was the prediction taken or not taken
          * true: taken
          * false: not taken
          */
         bool prediction;
 
-        /** The Result of the SRNN network
-        */
-        int64_t yValue;
+        /** Value indicating if the reason for the branch was unconditional */
+        bool unconditionalBranch;
 
     };
 
