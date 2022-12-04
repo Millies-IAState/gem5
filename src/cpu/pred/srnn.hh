@@ -102,11 +102,9 @@ class SrnnBP : public BPredUnit
     { assert(bp_history == NULL); }
 
   private:
-  struct BPHistory
+  class BPHistory
     {
         unsigned globalHistoryReg;
-        
-        
 
         /** The Result of the SRNN network
         */
