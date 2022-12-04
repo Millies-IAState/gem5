@@ -116,13 +116,16 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
     DPRINTF(SrnnBPDB, "Initializing Indexes and weights\r\n");
     uint32_t local_predictor_idx = branch_addr | PHT_index_mask;
-    std::vector<int32_t> weights = PHT_w[local_predictor_idx];
-    std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
-    std::vector<int64_t> sValues(GHR_LENGTH,0);
-
     DPRINTF(SrnnBPDB, "Looking up index %#x\n",
             local_predictor_idx);
 
+    std::vector<int32_t> weights = PHT_w[local_predictor_idx];
+    DPRINTF(SrnnBPDB, "Completed Weights");
+    std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
+    DPRINTF(SrnnBPDB, "Completed uValues");
+    std::vector<int64_t> sValues(GHR_LENGTH,0);
+
+    
     DPRINTF(SrnnBPDB, "Initializing SValues\r\n");
     //Initialize S Values
     for(size_t i = 0; i < GHR_LENGTH; i++)
