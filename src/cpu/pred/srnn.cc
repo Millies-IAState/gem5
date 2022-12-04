@@ -175,7 +175,7 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget)
 {
     DPRINTF(SrnnBPDB, "Entering Update\r\n");
-    assert(bp_history == NULL);
+    assert(bp_history);
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
     DPRINTF(SrnnBPDB, "Entering If\r\n");
