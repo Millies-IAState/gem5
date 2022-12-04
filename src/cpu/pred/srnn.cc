@@ -54,8 +54,8 @@ namespace branch_prediction
 
 SrnnBP::SrnnBP(const SrnnBPParams &params)
     : BPredUnit(params),
-      localGHRSize(GHR_LENGTH),
-      localPHTSize(params.localPHTSize),
+      localGHRSize(GHR_LENGTH), //Constant 32 Bit GHR for now
+      localPHTSize(params.localPHTSize), //Number of PHT Rows (Each row has GHRSize w and u weights)
       localPHTUpdateWeight(params.localPHTUpdateWeight),
       PHT_w(localPHTSize),
       PHT_u(localPHTSize)
@@ -110,6 +110,9 @@ bool
 SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 {
     bool taken;
+    /** Create a new History Object to store */
+    BPHistory *history = new BPHistory();
+    bp_history = (void *)history;
 
     uint32_t local_predictor_idx = branch_addr | PHT_index_mask;
     int32_t weights = PHT_w[local_predictor_idx];
@@ -122,7 +125,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     //Initialize S Values
     for(size_t i = 0; i < GHR_LENGTH; i++)
     {
-        //+ Weight on Taken, Negative Weight on not taken.
+        //+ Weight on Taken, - Weight on not taken.
         if(((GHR >> i) & 0x01) > 0)
         {
             sValues[i] = weights[i];
@@ -135,7 +138,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
     int32_t sCount = GHR_LENGTH >> 1;
     int32_t uIndex = 0;
-    while (sCount > 1) //Finish Thinking this through
+    while (sCount > 0)
     {
         for(size_t i = 0; i < sCount; i++)
         {
@@ -145,12 +148,17 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
         sCount >> 1;
     }
 
+    DPRINTF(Fetch, "prediction value (Y) is %lld.\n",
+            (int64_t)sValues[i]);
 
+    taken = sValues[0] > 0;
 
-    DPRINTF(Fetch, "prediction is %i.\n",
-            (int)counter_val);
+    history->prediction = taken;
+    history->yValue = sValues[0];
+    history->globalHistoryReg = GHR;
 
-    taken = getPrediction(counter_val);
+    unsigned takenValue = (taken) ? 1 : 0;
+    GHR = (GHR << 1) | takenValue;
 
     return taken;
 }
@@ -162,11 +170,13 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
     assert(bp_history == NULL);
     BPHistory *history = static_cast<BPHistory*>(bpHistory);
 
-    // If the taken value was invalid, restore the GHR
+    unsigned takenValue = (taken) ? 1 : 0;
+    // If the taken value was invalid, restore the GHR and commit the correct value.
     if (squashed) {
-        GHR = (history->globalHistoryReg << 1) | taken;
+        GHR = (history->globalHistoryReg << 1) | takenValue;
         return;
     }
+
     updatePHT(branch_addr, bp_history, taken);
     updateGHR(taken);
 }
@@ -179,7 +189,7 @@ SrnnBP::updateGHR(bool taken)
     GHR = (GHR << 1) | takenValue;
 }
 
-#define update_thresh 10
+#define update_thresh 80
 #define u_index 0
 #define u_increment 2
 
@@ -191,8 +201,6 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     int32_t weights = PHT_w[pc | PHT_index_mask];
     int32_t uValues = PHT_u[pc | PHT_index_mask];
 
-    int32_t takenWeight = (actual) ? 1 : -1;
-
     if((abs(history->yValue) < update_thresh) || (history->prediction != actual))
     {
         for(size_t i = 0; i < localGHRLength)
@@ -203,22 +211,23 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
                 if(weight[i] < WEIGHT_MAX)
                 {
                     /** If Equal, improve the weight*/
-                    weights[i] = weights[i] + takenWeight;
+                    weights[i] = weights[i] + localPHTUpdateWeight;
                 }
                 /** There is one less u variable than w variables. */
                 if((i < localGHRSize - PHT_U_COUNT_OFFSET) && (uValues[i] < WEIGHT_MAX))
                 {
-                    uValues[i] = uValues[i] + 1;
+                    uValues[i] = uValues[i] + localPHTUpdateWeight;localPHTUpdateWeight
                 }
             }
-            else
+            else //The prodiction was wrong
             {
                 if(weight[i] > WEIGHT_MIN)
                 {
                     /** If not equal, don't improve the weight.*/
-                    weights[i] = weights[i] - takenWeight;
+                    weights[i] = weights[i] - localPHTUpdateWeight;
                 }
-                if((i < localGHRSize - PHT_U_COUNT_OFFSET) && (uValues[i] < WEIGHT_MAX))
+                //Again, one fewer u value
+                if((i < (localGHRSize - PHT_U_COUNT_OFFSET)) && (uValues[i] < WEIGHT_MAX))
                 {
                     uValues[i] = 1;
                 }

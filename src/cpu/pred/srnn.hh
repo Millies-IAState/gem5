@@ -69,6 +69,7 @@ class SrnnBP : public BPredUnit
      */
     SrnnBP(const SrnnBPParams &params);
 
+    /** Called on an unconditional branch execution. */
     virtual void uncondBranch(ThreadID tid, Addr pc, void * &bp_history);
 
     /**
@@ -113,7 +114,7 @@ class SrnnBP : public BPredUnit
 
         /** The Result of the SRNN network
         */
-        int yValue;
+        int64_t yValue;
 
     };
     /**
