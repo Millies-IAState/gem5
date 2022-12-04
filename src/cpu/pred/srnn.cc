@@ -115,8 +115,8 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     bp_history = (void *)history;
 
     uint32_t local_predictor_idx = branch_addr | PHT_index_mask;
-    int32_t weights = PHT_w[local_predictor_idx];
-    int32_t uValues = PHT_u[local_predictor_idx];
+    std::vector<int32_t> weights = PHT_w[local_predictor_idx];
+    std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
     std::vector<int64_t> sValues(GHR_LENGTH,0);
 
     DPRINTF(Fetch, "Looking up index %#x\n",
@@ -158,6 +158,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     history->globalHistoryReg = GHR;
 
     unsigned takenValue = (taken) ? 1 : 0;
+    //Update the GHR based on the taken value or not.
     GHR = (GHR << 1) | takenValue;
 
     return taken;
@@ -168,7 +169,7 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget)
 {
     assert(bp_history == NULL);
-    BPHistory *history = static_cast<BPHistory*>(bpHistory);
+    BPHistory *history = static_cast<BPHistory*>(bp_history);
 
     unsigned takenValue = (taken) ? 1 : 0;
     // If the taken value was invalid, restore the GHR and commit the correct value.
@@ -196,19 +197,19 @@ SrnnBP::updateGHR(bool taken)
 void
 SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
 {
-    BPHistory *history = static_cast<BPHistory*>(bpHistory);
+    BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    int32_t weights = PHT_w[pc | PHT_index_mask];
-    int32_t uValues = PHT_u[pc | PHT_index_mask];
+    std::vector<int32_t> weights = PHT_w[pc | PHT_index_mask];
+    std::vector<int32_t> uValues = PHT_u[pc | PHT_index_mask];
 
     if((abs(history->yValue) < update_thresh) || (history->prediction != actual))
     {
-        for(size_t i = 0; i < localGHRLength)
+        for(size_t i = 0; i < ; i++)
         {
             /** Check if the GHR and Prediction were equal, and we can improve the weights */
             if((((GHR >> i) & 0x01) > 0) == (history->prediction))
             {
-                if(weight[i] < WEIGHT_MAX)
+                if(weights[i] < WEIGHT_MAX)
                 {
                     /** If Equal, improve the weight*/
                     weights[i] = weights[i] + localPHTUpdateWeight;
@@ -216,12 +217,12 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
                 /** There is one less u variable than w variables. */
                 if((i < localGHRSize - PHT_U_COUNT_OFFSET) && (uValues[i] < WEIGHT_MAX))
                 {
-                    uValues[i] = uValues[i] + localPHTUpdateWeight;localPHTUpdateWeight
+                    uValues[i] = uValues[i] + localPHTUpdateWeight;
                 }
             }
             else //The prodiction was wrong
             {
-                if(weight[i] > WEIGHT_MIN)
+                if(weights[i] > WEIGHT_MIN)
                 {
                     /** If not equal, don't improve the weight.*/
                     weights[i] = weights[i] - localPHTUpdateWeight;
@@ -234,14 +235,6 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
             }
         }
     }
-}
-
-inline
-bool
-SrnnBP::getPrediction(uint8_t &count)
-{
-    // Get the MSB of the count
-    return (count >> (localCtrBits - 1));
 }
 
 void

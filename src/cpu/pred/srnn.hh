@@ -117,13 +117,6 @@ class SrnnBP : public BPredUnit
         int64_t yValue;
 
     };
-    /**
-     *  Returns the taken/not taken prediction given the value of the
-     *  counter.
-     *  @param count The value of the counter.
-     *  @return The prediction based on the counter value.
-     */
-    inline bool getPrediction(uint8_t &count);
 
     /** Updates the GHR Register*/
     void updateGHR(bool taken);
