@@ -101,8 +101,7 @@ class SrnnBP : public BPredUnit
     void squash(ThreadID tid, void *bp_history)
     { assert(bp_history == NULL); }
 
-  private:
-  class BPHistory
+    class BPHistory
     {
         unsigned globalHistoryReg;
 
@@ -120,6 +119,8 @@ class SrnnBP : public BPredUnit
         bool unconditionalBranch;
 
     };
+
+  private:
 
     /** Updates the GHR Register*/
     void updateGHR(bool taken);
