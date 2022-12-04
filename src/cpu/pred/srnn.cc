@@ -60,6 +60,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
       PHT_w(localPHTSize),
       PHT_u(localPHTSize)
 {
+    DPRINTF(Fetch, "Flag1");
     if (!isPowerOf2(localGHRSize) || (localGHRSize > 32)) {
         fatal("Invalid GHR size! Must be power of 2 and 32 or less\n");
     }
@@ -67,12 +68,12 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     if (!isPowerOf2(localPHTSize)) {
         fatal("Invalid PHT size! Must be power of 2\n");
     }
-
+    DPRINTF(Fetch, "Flag2");
     /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
      * As the PHT is indexed 0 to size - 1, this should be the valid mask.
     */
     PHT_index_mask = localGHRSize - 1;
-
+    DPRINTF(Fetch, "Flag3");
     //Generate a random set of GHR Bits
     GHR = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
@@ -82,6 +83,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     }
     GHR = GHR | ((unsigned)rand() & U8_MAX);
 
+    DPRINTF(Fetch, "Flag4");
 
     //Initialize Random Weights
     for(size_t i = 0; i < localPHTSize; i++)
@@ -96,6 +98,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
             PHT_u[i].push_back((rand() % WEIGHT_MOD) - WEIGHT_MAX);
         }
     }
+    DPRINTF(Fetch, "Flag5");
 }
 
 void
