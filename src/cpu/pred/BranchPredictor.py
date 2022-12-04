@@ -80,8 +80,9 @@ class SrnnBP(BranchPredictor):
     cxx_class = 'gem5::branch_prediction::SrnnBP'
     cxx_header = "cpu/pred/srnn.hh"
 
-    localGHRSize = Param.Unsigned(32, "Number of previous branch outcomes in the Global History Registers")
+    localGHRSize = Param.Unsigned(32, "[todo] Number of previous branch outcomes in the Global History Registers")
     localPHTSize = Param.Unsigned(512, "Number of Pattern History Table Entries.")
+    localPHTUpdateWeight = Param.Unsigned(1, "The Update Value for when a weak or missprediction occures.")
 
 class TournamentBP(BranchPredictor):
     type = 'TournamentBP'

@@ -101,6 +101,21 @@ class SrnnBP : public BPredUnit
     { assert(bp_history == NULL); }
 
   private:
+  struct BPHistory
+    {
+        unsigned globalHistoryReg;
+        
+        /** Was the prediction taken or not taken
+         * true: taken
+         * false: not taken
+         */
+        bool prediction;
+
+        /** The Result of the SRNN network
+        */
+        int yValue;
+
+    };
     /**
      *  Returns the taken/not taken prediction given the value of the
      *  counter.
@@ -109,8 +124,11 @@ class SrnnBP : public BPredUnit
      */
     inline bool getPrediction(uint8_t &count);
 
-    /** Calculates the local index based on the PC. */
-    inline unsigned getLocalIndex(Addr &PC);
+    /** Updates the GHR Register*/
+    void updateGHR(bool taken);
+
+    /** Update the PHT */
+    void updatePHT(Addr pc, void *bp_history, bool actual);
 
     /** Size of the GHR. */
     const unsigned localGHRSize;
@@ -118,10 +136,19 @@ class SrnnBP : public BPredUnit
     /** Size of the PHT */
     const unsigned localPHTSize;
 
+    const unsigned localPHTUpdateWeight;
+
     /** The Global History Registers*/
-    std::vector<int8_t> GHR;
-    std::vector<int32_t> PHT_w;
-    std::vector<int32_t> PHT_u;
+    unsigned GHR;
+
+    /** Bits available for the PHT */
+    int32_t PHT_index_mask;
+
+    /** PHT Weight Values*/
+    std::vector<std::vector<int32_t>> PHT_w;
+
+    /** PHT U Values*/
+    std::vector<std::vector<int32_t>> PHT_u;
 };
 
 } // namespace branch_prediction

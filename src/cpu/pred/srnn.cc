@@ -42,40 +42,60 @@ namespace gem5
 namespace branch_prediction
 {
 
+#define UNSIGNED_BIT_COUNT 32
+#define GHR_LENGTH UNSIGNED_BIT_COUNT
+#define U8_BIT_COUNT 8
+#define BYTES_PER_INT 4
+#define U8_MAX 0xFF
+#define WEIGHT_MAX 255
+#define WEIGHT_MIN -255
+#define WEIGHT_MOD (WEIGHT_MAX + WEIGHT_MAX + 1)
+#define PHT_U_COUNT_OFFSET 1
+
 SrnnBP::SrnnBP(const SrnnBPParams &params)
     : BPredUnit(params),
-      localGHRSize(params.localGHRSize),
+      localGHRSize(GHR_LENGTH),
       localPHTSize(params.localPHTSize),
-      GHR(localGHRSize, 1)
+      localPHTUpdateWeight(params.localPHTUpdateWeight),
+      PHT_w(localPHTSize),
+      PHT_u(localPHTSize)
 {
-    if (!isPowerOf2(localGHRSize)) {
-        fatal("Invalid GHR size!\n");
+    if (!isPowerOf2(localGHRSize) || (localGHRSize > 32)) {
+        fatal("Invalid GHR size! Must be power of 2 and 32 or less\n");
     }
 
     if (!isPowerOf2(localPHTSize)) {
-        fatal("Invalid PHT size!\n");
+        fatal("Invalid PHT size! Must be power of 2\n");
     }
 
-    //Initialize Weights
-    for (size_t i = 0; i < localPHTSize; i++)
+    /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
+     * As the PHT is indexed 0 to size - 1, this should be the valid mask.
+    */
+    PHT_index_mask = localGHRSize - 1;
+
+    //Generate a random set of GHR Bits
+    GHR = 0;
+    for(size_t i = 0; i < BYTES_PER_INT; i++)
     {
-        //Setup rand seed
-        srand(time(NULL));
+        GHR = GHR | ((unsigned)rand() & U8_MAX);
+        GHR = GHR << U8_BIT_COUNT;
+    }
+    GHR = GHR | ((unsigned)rand() & U8_MAX);
 
-        //Push a value anywhere between -15 and 15.
-        PHT_w.push_back((rand() % 31) - 15);
 
-        //U can be 1 or 0, use random to decide which to push for each loop.
-        if((rand() % 2) == 1)
+    //Initialize Random Weights
+    for(size_t i = 0; i < localPHTSize; i++)
+    {
+        for (size_t j = 0; j < localGHRSize; j++)
         {
-            PHT_u.push_back(1);
-        }
-        else
-        {
-            PHT_u.push_back(-1);
+            //Setup rand seed
+            srand(time(NULL));
+
+            //Push a value anywhere between Weight Max and Min
+            PHT_w[i].push_back((rand() % WEIGHT_MOD) - WEIGHT_MAX);
+            PHT_u[i].push_back((rand() % WEIGHT_MOD) - WEIGHT_MAX);
         }
     }
-    
 }
 
 void
@@ -90,12 +110,42 @@ bool
 SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 {
     bool taken;
-    unsigned local_predictor_idx = getLocalIndex(branch_addr);
+
+    uint32_t local_predictor_idx = branch_addr | PHT_index_mask;
+    int32_t weights = PHT_w[local_predictor_idx];
+    int32_t uValues = PHT_u[local_predictor_idx];
+    std::vector<int64_t> sValues(GHR_LENGTH,0);
 
     DPRINTF(Fetch, "Looking up index %#x\n",
             local_predictor_idx);
 
-    uint8_t counter_val = localCtrs[local_predictor_idx];
+    //Initialize S Values
+    for(size_t i = 0; i < GHR_LENGTH; i++)
+    {
+        //+ Weight on Taken, Negative Weight on not taken.
+        if(((GHR >> i) & 0x01) > 0)
+        {
+            sValues[i] = weights[i];
+        }
+        else
+        {
+            sValues[i] = -1 * weights[i];
+        }
+    }
+
+    int32_t sCount = GHR_LENGTH >> 1;
+    int32_t uIndex = 0;
+    while (sCount > 1) //Finish Thinking this through
+    {
+        for(size_t i = 0; i < sCount; i++)
+        {
+            sValues[i] = (sValues[(i << 1) + 1] + (uValues[uIndex] * sValues[i << 1]));
+            uIndex = uIndex + 1;
+        }
+        sCount >> 1;
+    }
+
+
 
     DPRINTF(Fetch, "prediction is %i.\n",
             (int)counter_val);
@@ -110,37 +160,71 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget)
 {
     assert(bp_history == NULL);
+    BPHistory *history = static_cast<BPHistory*>(bpHistory);
 
-    updateGHR(taken);
-    // No state to restore, and we do not update on the wrong
-    // path.
+    // If the taken value was invalid, restore the GHR
     if (squashed) {
+        GHR = (history->globalHistoryReg << 1) | taken;
         return;
     }
-
-
-    
+    updatePHT(branch_addr, bp_history, taken);
+    updateGHR(taken);
 }
 
 void
 SrnnBP::updateGHR(bool taken)
 {
-    //Remove the oldest element, and add on the newest.
-    GHR.pop_back();
-    if(taken)
-    {
-        GHR.push(1);
-    }
-    else
-    {
-        GHR.push(-1);
-    }
+    /** Update the GHR with the newest event, remove the oldest.. */
+    unsigned takenValue = (taken) ? 1 : 0;
+    GHR = (GHR << 1) | takenValue;
 }
 
-void
-SrnnBP::updatePHT()
-{
+#define update_thresh 10
+#define u_index 0
+#define u_increment 2
 
+void
+SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
+{
+    BPHistory *history = static_cast<BPHistory*>(bpHistory);
+
+    int32_t weights = PHT_w[pc | PHT_index_mask];
+    int32_t uValues = PHT_u[pc | PHT_index_mask];
+
+    int32_t takenWeight = (actual) ? 1 : -1;
+
+    if((abs(history->yValue) < update_thresh) || (history->prediction != actual))
+    {
+        for(size_t i = 0; i < localGHRLength)
+        {
+            /** Check if the GHR and Prediction were equal, and we can improve the weights */
+            if((((GHR >> i) & 0x01) > 0) == (history->prediction))
+            {
+                if(weight[i] < WEIGHT_MAX)
+                {
+                    /** If Equal, improve the weight*/
+                    weights[i] = weights[i] + takenWeight;
+                }
+                /** There is one less u variable than w variables. */
+                if((i < localGHRSize - PHT_U_COUNT_OFFSET) && (uValues[i] < WEIGHT_MAX))
+                {
+                    uValues[i] = uValues[i] + 1;
+                }
+            }
+            else
+            {
+                if(weight[i] > WEIGHT_MIN)
+                {
+                    /** If not equal, don't improve the weight.*/
+                    weights[i] = weights[i] - takenWeight;
+                }
+                if((i < localGHRSize - PHT_U_COUNT_OFFSET) && (uValues[i] < WEIGHT_MAX))
+                {
+                    uValues[i] = 1;
+                }
+            }
+        }
+    }
 }
 
 inline
@@ -151,16 +235,10 @@ SrnnBP::getPrediction(uint8_t &count)
     return (count >> (localCtrBits - 1));
 }
 
-inline
-unsigned
-SrnnBP::getLocalIndex(Addr &branch_addr)
-{
-    return (branch_addr >> instShiftAmt) & indexMask;
-}
-
 void
 SrnnBP::uncondBranch(ThreadID tid, Addr pc, void *&bp_history)
 {
+    //Unconditional Branches are ignored.
 }
 
 } // namespace branch_prediction
