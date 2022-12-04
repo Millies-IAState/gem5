@@ -114,14 +114,16 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     BPHistory *history = new BPHistory();
     bp_history = (void *)history;
 
+    DPRINTF(SrnnBPDB, "Initializing Indexes and weights\r\n");
     uint32_t local_predictor_idx = branch_addr | PHT_index_mask;
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
     std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
     std::vector<int64_t> sValues(GHR_LENGTH,0);
 
-    DPRINTF(Fetch, "Looking up index %#x\n",
+    DPRINTF(SrnnBPDB, "Looking up index %#x\n",
             local_predictor_idx);
 
+    DPRINTF(SrnnBPDB, "Initializing SValues\r\n");
     //Initialize S Values
     for(size_t i = 0; i < GHR_LENGTH; i++)
     {
@@ -138,8 +140,11 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
     int32_t sCount = GHR_LENGTH >> 1;
     int32_t uIndex = 0;
+    DPRINTF(SrnnBPDB, "Iterating internal nodes\r\n");
     while (sCount > 0)
     {
+        DPRINTF(SrnnBPDB, "sCount Loop Value:%#x\n",
+            sCount);
         for(size_t i = 0; i < sCount; i++)
         {
             sValues[i] = (sValues[(i << 1) + 1] + (uValues[uIndex] * sValues[i << 1]));
@@ -151,7 +156,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
     int64_t predictionValue = sValues[0];
 
-    DPRINTF(Fetch, "prediction value (Y) is %lld.\n",
+    DPRINTF(SrnnBPDB, "prediction value (Y) is %lld.\n",
             predictionValue);
 
     taken = predictionValue > 0;
