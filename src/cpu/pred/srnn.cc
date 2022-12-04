@@ -145,16 +145,19 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
             sValues[i] = (sValues[(i << 1) + 1] + (uValues[uIndex] * sValues[i << 1]));
             uIndex = uIndex + 1;
         }
-        sCount >> 1;
+        sCount = sCount >> 1;
     }
 
-    DPRINTF(Fetch, "prediction value (Y) is %lld.\n",
-            (int64_t)sValues[i]);
 
-    taken = sValues[0] > 0;
+    int64_t predictionValue = sValues[0];
+
+    DPRINTF(Fetch, "prediction value (Y) is %lld.\n",
+            predictionValue);
+
+    taken = predictionValue > 0;
 
     history->prediction = taken;
-    history->yValue = sValues[0];
+    history->yValue = predictionValue;
     history->globalHistoryReg = GHR;
 
     unsigned takenValue = (taken) ? 1 : 0;
@@ -204,7 +207,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
 
     if((abs(history->yValue) < update_thresh) || (history->prediction != actual))
     {
-        for(size_t i = 0; i < ; i++)
+        for(size_t i = 0; i < localGHRSize; i++)
         {
             /** Check if the GHR and Prediction were equal, and we can improve the weights */
             if((((GHR >> i) & 0x01) > 0) == (history->prediction))
