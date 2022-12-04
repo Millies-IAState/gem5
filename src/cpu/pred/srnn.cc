@@ -264,8 +264,9 @@ SrnnBP::uncondBranch(ThreadID tid, Addr pc, void *&bp_history)
     BPHistory *history = new BPHistory();
     bp_history = (void *)history;
 
-    history->prediction = taken;
-    history->yValue = predictionValue;
+    /** Some default values for unconditional branch*/
+    history->prediction = true;
+    history->yValue = 1;
     history->globalHistoryReg = GHR;
     history->unconditionalBranch = true;
 
