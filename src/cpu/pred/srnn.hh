@@ -101,26 +101,26 @@ class SrnnBP : public BPredUnit
     void squash(ThreadID tid, void *bp_history)
     { assert(bp_history == NULL); }
 
-    class BPHistory
+  private:
+  class BPHistory
     {
-        unsigned globalHistoryReg;
+      public:
+      unsigned globalHistoryReg;
 
-        /** The Result of the SRNN network
-        */
-        int64_t yValue;
+      /** The Result of the SRNN network
+      */
+      int64_t yValue;
         
-        /** Was the prediction taken or not taken
-         * true: taken
-         * false: not taken
-         */
-        bool prediction;
+      /** Was the prediction taken or not taken
+      * true: taken
+      * false: not taken
+      */
+      bool prediction;
 
-        /** Value indicating if the reason for the branch was unconditional */
-        bool unconditionalBranch;
+      /** Value indicating if the reason for the branch was unconditional */
+      bool unconditionalBranch;
 
     };
-
-  private:
 
     /** Updates the GHR Register*/
     void updateGHR(bool taken);
