@@ -61,7 +61,6 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
       PHT_w(localPHTSize),
       PHT_u(localPHTSize)
 {
-    DPRINTF(SrnnBPDB, "Flag1");
     if (!isPowerOf2(localGHRSize) || (localGHRSize > 32)) {
         fatal("Invalid GHR size! Must be power of 2 and 32 or less\n");
     }
@@ -69,12 +68,10 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     if (!isPowerOf2(localPHTSize)) {
         fatal("Invalid PHT size! Must be power of 2\n");
     }
-    DPRINTF(SrnnBPDB, "Flag2");
     /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
      * As the PHT is indexed 0 to size - 1, this should be the valid mask.
     */
     PHT_index_mask = localGHRSize - 1;
-    DPRINTF(SrnnBPDB, "Flag3");
     //Generate a random set of GHR Bits
     GHR = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
@@ -83,8 +80,6 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
         GHR = GHR << U8_BIT_COUNT;
     }
     GHR = GHR | ((unsigned)rand() & U8_MAX);
-
-    DPRINTF(SrnnBPDB, "Flag4");
 
     //Initialize Random Weights
     for(size_t i = 0; i < localPHTSize; i++)
@@ -99,7 +94,6 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
             PHT_u[i].push_back((rand() % WEIGHT_MOD) - WEIGHT_MAX);
         }
     }
-    DPRINTF(SrnnBPDB, "Flag5");
 }
 
 void
@@ -113,6 +107,7 @@ SrnnBP::btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history)
 bool
 SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 {
+    DPRINTF(SrnnBPDB, "Enter Lookup\r\n");
     bool taken;
     /** Create a new History Object to store */
     BPHistory *history = new BPHistory();
@@ -167,14 +162,16 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     unsigned takenValue = (taken) ? 1 : 0;
     //Update the GHR based on the taken value or not.
     GHR = (GHR << 1) | takenValue;
-
+    DPRINTF(SrnnBPDB, "Exiting Lookup\r\n");
     return taken;
+    
 }
 
 void
 SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget)
 {
+    DPRINTF(SrnnBPDB, "Entering Update\r\n");
     assert(bp_history == NULL);
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
@@ -187,14 +184,17 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
 
     updatePHT(branch_addr, bp_history, taken);
     updateGHR(taken);
+    DPRINTF(SrnnBPDB, "Exiting Update\r\n");
 }
 
 void
 SrnnBP::updateGHR(bool taken)
 {
+    DPRINTF(SrnnBPDB, "Entering updateGHR\r\n");
     /** Update the GHR with the newest event, remove the oldest.. */
     unsigned takenValue = (taken) ? 1 : 0;
     GHR = (GHR << 1) | takenValue;
+    DPRINTF(SrnnBPDB, "Exiting updateGHR\r\n");
 }
 
 #define update_thresh 80
@@ -204,6 +204,7 @@ SrnnBP::updateGHR(bool taken)
 void
 SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
 {
+    DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
     std::vector<int32_t> weights = PHT_w[pc | PHT_index_mask];
@@ -242,6 +243,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
             }
         }
     }
+    DPRINTF(SrnnBPDB, "Exiting updatePHT\r\n");
 }
 
 void
