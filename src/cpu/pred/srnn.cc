@@ -72,7 +72,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
      * As the PHT is indexed 0 to size - 1, this should be the valid mask.
     */
-    PHT_index_mask = localGHRSize - 1;
+    PHT_index_mask = localPHTSize - 1;
     //Generate a random set of GHR Bits
     GHR = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
@@ -115,7 +115,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     bp_history = (void *)history;
 
     DPRINTF(SrnnBPDB, "Initializing Indexes and weights\r\n");
-    uint32_t local_predictor_idx = branch_addr | PHT_index_mask;
+    uint64_t local_predictor_idx = (branch_addr >> 2) & PHT_index_mask;
     DPRINTF(SrnnBPDB, "Looking up index %#x\n",
             local_predictor_idx);
 
@@ -225,8 +225,10 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    std::vector<int32_t> weights = PHT_w[pc | PHT_index_mask];
-    std::vector<int32_t> uValues = PHT_u[pc | PHT_index_mask];
+    uint64_t local_predictor_idx = (branch_addr >> 2) & PHT_index_mask;
+
+    std::vector<int32_t> weights = PHT_w[local_predictor_idx];
+    std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
 
     if((abs(history->yValue) < update_thresh) || (history->prediction != actual))
     {
