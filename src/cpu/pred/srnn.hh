@@ -143,6 +143,8 @@ class SrnnBP : public BPredUnit
 
     /** PHT U Values*/
     std::vector<std::vector<int32_t>> PHT_u;
+
+    bool firstPrediction;
 };
 
 } // namespace branch_prediction

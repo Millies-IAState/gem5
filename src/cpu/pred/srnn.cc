@@ -68,6 +68,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     if (!isPowerOf2(localPHTSize)) {
         fatal("Invalid PHT size! Must be power of 2\n");
     }
+    firstPrediction = false;
     /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
      * As the PHT is indexed 0 to size - 1, this should be the valid mask.
     */
@@ -163,6 +164,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     //Update the GHR based on the taken value or not.
     GHR = (GHR << 1) | takenValue;
     DPRINTF(SrnnBPDB, "Exiting Lookup\r\n");
+    firstPrediction = true;
     return taken;
     
 }
@@ -172,18 +174,22 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget)
 {
     DPRINTF(SrnnBPDB, "Entering Update\r\n");
-    assert(bp_history == NULL);
-    BPHistory *history = static_cast<BPHistory*>(bp_history);
-
-    unsigned takenValue = (taken) ? 1 : 0;
-    // If the taken value was invalid, restore the GHR and commit the correct value.
-    if (squashed) {
-        GHR = (history->globalHistoryReg << 1) | takenValue;
-        return;
+    if(firstPrediction)
+    {
+        assert(bp_history == NULL);
+        BPHistory *history = static_cast<BPHistory*>(bp_history);
+    
+        unsigned takenValue = (taken) ? 1 : 0;
+        DPRINTF(SrnnBPDB, "Entering If\r\n");
+        // If the taken value was invalid, restore the GHR and commit the correct value.
+        if (squashed) {
+            GHR = (history->globalHistoryReg << 1) | takenValue;
+            return;
+        }
+        updatePHT(branch_addr, bp_history, taken);
+        updateGHR(taken);
     }
-
-    updatePHT(branch_addr, bp_history, taken);
-    updateGHR(taken);
+    
     DPRINTF(SrnnBPDB, "Exiting Update\r\n");
 }
 
