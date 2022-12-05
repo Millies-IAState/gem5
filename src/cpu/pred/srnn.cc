@@ -175,7 +175,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
             sValues[i] = (sValues[index2] + (((int64_t)uValues[uIndex]) * sValues[index1]));
 
-            DPRINTF(SrnnBPDB, "%lli + (%lli * %lli) = %lli in index %li\n",sValues[index2],((int64_t)uValues[uIndex]),sValues[index1],sValues[i],i);
+            DPRINTF(SrnnBPDB, "%lli + (%lli * %lli) = %lli in index %li\n",sValues[index2],((int64_t)uValues[uIndex]),sValues[index1],sValues[index2],i);
             uIndex = uIndex + 1;
         }
         sCount = sCount >> 1;
@@ -213,7 +213,7 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
 
     DPRINTF(SrnnBPDB, "Entering If\r\n");
     if (history->unconditionalBranch) {
-        delete history;
+        //delete history;
         return;
     }
 
@@ -248,9 +248,11 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
 
     uint64_t local_predictor_idx = (pc >> 2) & PHT_index_mask;
 
+    DPRINTF(SrnnBPDB, "Update PHT local_predictor_idx %lli\r\n",local_predictor_idx);
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
     std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
 
+    DPRINTF(SrnnBPDB, "Training Check:  (%lli < %lli) or  \r\n",local_predictor_idx);
     if((abs(history->yValue) < update_thresh) || (history->prediction != actual))
     {
         for(size_t i = 0; i < localGHRSize; i++)
