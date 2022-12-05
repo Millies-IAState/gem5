@@ -378,7 +378,7 @@ BaseSimpleCPU::preExecute()
         if (predict_taken)
             ++t_info.execContextStats.numPredictedBranches;
     }
-    DPRINTF(TestBPIssues, "Exiting Pre-execute")
+    DPRINTF(TestBPIssues, "Exiting Pre-execute");
 }
 
 void
