@@ -48,10 +48,12 @@ namespace branch_prediction
 #define U8_BIT_COUNT 8
 #define BYTES_PER_INT 4
 #define U8_MAX 0xFF
-#define WEIGHT_MAX 255
-#define WEIGHT_MIN -255
+#define WEIGHT_MAX 15
+#define WEIGHT_MIN -15
 #define WEIGHT_MOD (WEIGHT_MAX + WEIGHT_MAX + 1)
 #define PHT_U_COUNT_OFFSET 1
+#define update_thresh 10
+#define u_index 0
 
 SrnnBP::SrnnBP(const SrnnBPParams &params)
     : BPredUnit(params),
@@ -61,6 +63,10 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
       PHT_w(localPHTSize),
       PHT_u(localPHTSize)
 {
+    DPRINTF(SrnnBPDB, "localGHRSize %u\r\n",localGHRSize);
+    DPRINTF(SrnnBPDB, "localPHTSize %u\r\n",localPHTSize);
+    DPRINTF(SrnnBPDB, "localPHTUpdateWeight %u\r\n", localPHTUpdateWeight);
+
     if (!isPowerOf2(localGHRSize) || (localGHRSize > 32)) {
         fatal("Invalid GHR size! Must be power of 2 and 32 or less\n");
     }
@@ -85,15 +91,25 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     //Initialize Random Weights
     for(size_t i = 0; i < localPHTSize; i++)
     {
+        DPRINTF(SrnnBPDB, "Indexing PHT: %i\r\n",i);
         for (size_t j = 0; j < localGHRSize; j++)
         {
             //Setup rand seed
             srand(time(NULL));
 
+
+            int32_t randW = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
+            int32_t randU = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
+
+            DPRINTF(SrnnBPDB, "Indexing W and U: %i\r\n",j);
+            DPRINTF(SrnnBPDB, "Adding Random U Value %li\r\n",randU);
+            DPRINTF(SrnnBPDB, "Adding Random W Value %li\r\n",randW);
+
             //Push a value anywhere between Weight Max and Min
-            PHT_w[i].push_back((rand() % WEIGHT_MOD) - WEIGHT_MAX);
-            PHT_u[i].push_back((rand() % WEIGHT_MOD) - WEIGHT_MAX);
+            PHT_w[i].push_back(randW);
+            PHT_u[i].push_back(randU);
         }
+        DPRINTF(SrnnBPDB, "\r\n");
     }
 }
 
@@ -141,6 +157,8 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
         {
             sValues[i] = -1 * weights[i];
         }
+        DPRINTF(SrnnBPDB, "SValue Set: Index %li - Value: %lli\n",
+        i,sValues[i]);
     }
 
     int32_t sCount = GHR_LENGTH >> 1;
@@ -152,7 +170,13 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
             sCount);
         for(size_t i = 0; i < sCount; i++)
         {
-            sValues[i] = (sValues[(i << 1) + 1] + (uValues[uIndex] * sValues[i << 1]));
+            int32_t index1 = i << 1;
+            int32_t index2 = index1 + 1;
+            DPRINTF(SrnnBPDB, "S Calc Inputs:\nIndex: %li Value:%lli\nIndex:%li Value:%lli\n",
+            index1, sValue[index1],index2,sValue[index2]);
+            DPRINTF(SrnnBPDB, "U Calc Input:\nIndex: %li Value:%lli\n",
+            uIndex, uValues[uIndex]);
+            sValues[i] = (sValues[index2] + (uValues[uIndex] * sValues[index1]));
             uIndex = uIndex + 1;
         }
         sCount = sCount >> 1;
@@ -216,10 +240,6 @@ SrnnBP::updateGHR(bool taken)
     GHR = (GHR << 1) | takenValue;
     DPRINTF(SrnnBPDB, "Exiting updateGHR\r\n");
 }
-
-#define update_thresh 80
-#define u_index 0
-#define u_increment 2
 
 void
 SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
