@@ -95,8 +95,6 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
         for (size_t j = 0; j < localGHRSize; j++)
         {
             //Setup rand seed
-            
-
             int32_t randW = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
             int32_t randU = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
 
@@ -133,13 +131,13 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
     DPRINTF(SrnnBPDB, "Initializing Indexes and weights\r\n");
     uint64_t local_predictor_idx = (branch_addr >> 2) & PHT_index_mask;
-    DPRINTF(SrnnBPDB, "Looking up index %#x\n",
+    DPRINTF(SrnnBPDB, "Looking up index %llu\n",
             local_predictor_idx);
 
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
-    DPRINTF(SrnnBPDB, "Completed Weights");
+    DPRINTF(SrnnBPDB, "Completed Weights\n");
     std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
-    DPRINTF(SrnnBPDB, "Completed uValues");
+    DPRINTF(SrnnBPDB, "Completed uValues\n");
     std::vector<int64_t> sValues(GHR_LENGTH,0);
 
     
@@ -165,17 +163,19 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     DPRINTF(SrnnBPDB, "Iterating internal nodes\r\n");
     while (sCount > 0)
     {
-        DPRINTF(SrnnBPDB, "sCount Loop Value:%#x\n",
+        DPRINTF(SrnnBPDB, "sCount Loop Value:%li\n",
             sCount);
         for(size_t i = 0; i < sCount; i++)
         {
             int32_t index1 = i << 1;
             int32_t index2 = index1 + 1;
-            DPRINTF(SrnnBPDB, "S Calc Inputs:\nIndex: %li Value:%lli\nIndex:%li Value:%lli\n",
-            index1, sValues[index1],index2,sValues[index2]);
-            DPRINTF(SrnnBPDB, "U Calc Input:\nIndex: %li Value:%lli\n",
-            uIndex, uValues[uIndex]);
-            sValues[i] = (sValues[index2] + (uValues[uIndex] * sValues[index1]));
+
+            DPRINTF(SrnnBPDB, "Inputs S - Index1: %li Value1: %lli Index2: %li Value2: %lli, U - Index: %li Value: %lli\n",
+            index1, sValues[index1],index2,sValues[index2],uIndex, uValues[uIndex]);
+
+            sValues[i] = (sValues[index2] + (((int64_t)uValues[uIndex]) * sValues[index1]));
+
+            DPRINTF(SrnnBPDB, "%lli + (%lli * %lli) = %lli in index %li\n",sValues[index2],((int64_t)uValues[uIndex]),sValues[index1],sValues[i],i)
             uIndex = uIndex + 1;
         }
         sCount = sCount >> 1;
