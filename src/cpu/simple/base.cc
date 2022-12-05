@@ -378,7 +378,7 @@ BaseSimpleCPU::preExecute()
         DPRINTF(TestBPIssues, "Predict_taken Addr %p\n", &predict_taken);
         DPRINTF(TestBPIssues, "t_info Addr %p\n", &t_info);
         DPRINTF(TestBPIssues, "t_info.execContextStats Addr %p\n", &t_info.execContextStats);
-        DPRINTF(TestBPIssues, "t_info.execContextStats.numPredictedBranches Addr %p\n", &t_info.numPredictedBranches);
+        DPRINTF(TestBPIssues, "t_info.execContextStats.numPredictedBranches Addr %p\n", &t_info.execContextStats.numPredictedBranches);
 
         if (predict_taken)
             ++t_info.execContextStats.numPredictedBranches;
