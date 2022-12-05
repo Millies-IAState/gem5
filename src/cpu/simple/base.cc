@@ -66,6 +66,7 @@
 #include "debug/Fetch.hh"
 #include "debug/HtmCpu.hh"
 #include "debug/Quiesce.hh"
+#include "debug/TestBPIssues.hh"
 #include "mem/packet.hh"
 #include "mem/request.hh"
 #include "params/BaseSimpleCPU.hh"
@@ -374,9 +375,15 @@ BaseSimpleCPU::preExecute()
             branchPred->predict(curStaticInst, cur_sn, *t_info.predPC,
                 curThread));
 
+        DPRINTF(TestBPIssues, "Predict_taken Addr %p\n", &predict_taken);
+        DPRINTF(TestBPIssues, "t_info Addr %p\n", &t_info);
+        DPRINTF(TestBPIssues, "t_info.execContextStats Addr %p\n", &t_info.execContextStats);
+        DPRINTF(TestBPIssues, "t_info.execContextStats.numPredictedBranches Addr %p\n", &t_info.execContextStats.numPredictedBranches);
+
         if (predict_taken)
             ++t_info.execContextStats.numPredictedBranches;
     }
+    DPRINTF(TestBPIssues, "Exiting Pre-execute\n");
 }
 
 void

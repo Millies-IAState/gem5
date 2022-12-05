@@ -30,6 +30,7 @@ Import('*')
 
 if env['CONF']['TARGET_ISA'] != 'null':
     SimObject('BaseAtomicSimpleCPU.py', sim_objects=['BaseAtomicSimpleCPU'])
+    DebugFlag('TestBPIssues')
     Source('atomic.cc')
 
     # The NonCachingSimpleCPU is really an atomic CPU in
