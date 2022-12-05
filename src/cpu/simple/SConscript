@@ -43,6 +43,7 @@ if env['CONF']['TARGET_ISA'] != 'null':
     Source('timing.cc')
 
     DebugFlag('SimpleCPU')
+    DebugFlag('Test')
 
     Source('base.cc')
     SimObject('BaseSimpleCPU.py', sim_objects=['BaseSimpleCPU'])
