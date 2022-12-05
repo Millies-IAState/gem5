@@ -100,8 +100,10 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
 void
 SrnnBP::btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history)
 {
+    DPRINTF(SrnnBPDB, "Enter btbUpdate\r\n");
 // Place holder for a function that is called to update predictor history when
 // a BTB entry is invalid or not found.
+    DPRINTF(SrnnBPDB, "Exiting btbUpdate\r\n");
 }
 
 
