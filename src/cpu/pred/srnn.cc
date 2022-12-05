@@ -173,7 +173,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
             int32_t index1 = i << 1;
             int32_t index2 = index1 + 1;
             DPRINTF(SrnnBPDB, "S Calc Inputs:\nIndex: %li Value:%lli\nIndex:%li Value:%lli\n",
-            index1, sValue[index1],index2,sValue[index2]);
+            index1, sValues[index1],index2,sValues[index2]);
             DPRINTF(SrnnBPDB, "U Calc Input:\nIndex: %li Value:%lli\n",
             uIndex, uValues[uIndex]);
             sValues[i] = (sValues[index2] + (uValues[uIndex] * sValues[index1]));
@@ -185,7 +185,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
     int64_t predictionValue = sValues[0];
 
-    DPRINTF(SrnnBPDB, "prediction value (Y) is %lld.\n",
+    DPRINTF(SrnnBPDB, "prediction value (Y) is %lli.\n",
             predictionValue);
 
     taken = predictionValue > 0;
