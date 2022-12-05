@@ -87,7 +87,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
         GHR = GHR << U8_BIT_COUNT;
     }
     GHR = GHR | ((unsigned)rand() & U8_MAX);
-
+    srand(time(NULL));
     //Initialize Random Weights
     for(size_t i = 0; i < localPHTSize; i++)
     {
@@ -95,8 +95,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
         for (size_t j = 0; j < localGHRSize; j++)
         {
             //Setup rand seed
-            srand(time(NULL));
-
+            
 
             int32_t randW = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
             int32_t randU = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
