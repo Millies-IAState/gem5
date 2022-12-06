@@ -308,7 +308,7 @@ SrnnBP::uncondBranch(ThreadID tid, Addr pc, void *&bp_history)
 }
 
 void
-MultiperspectivePerceptron::squash(ThreadID tid, void *bp_history)
+SrnnBP::squash(ThreadID tid, void *bp_history)
 {
     assert(bp_history);
     MPPBranchInfo *bi = static_cast<MPPBranchInfo*>(bp_history);

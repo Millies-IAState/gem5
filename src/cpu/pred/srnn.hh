@@ -98,7 +98,7 @@ class SrnnBP : public BPredUnit
     void update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget) override;
 
-    void squash(ThreadID tid, void *bp_history) override
+    void squash(ThreadID tid, void *bp_history) override;
 
   private:
   class BPHistory
