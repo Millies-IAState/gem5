@@ -311,7 +311,7 @@ void
 SrnnBP::squash(ThreadID tid, void *bp_history)
 {
     assert(bp_history);
-    MPPBranchInfo *bi = static_cast<MPPBranchInfo*>(bp_history);
+    BPHistory *bi = static_cast<BPHistory*>(bp_history);
     delete bi;
 }
 
