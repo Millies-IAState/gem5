@@ -213,7 +213,7 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
 
     DPRINTF(SrnnBPDB, "Entering If\r\n");
     if (history->unconditionalBranch) {
-        //delete history;
+        delete history;
         return;
     }
 
@@ -287,6 +287,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
         }
     }
     DPRINTF(SrnnBPDB, "Exiting updatePHT\r\n");
+    delete history;
 }
 
 void
@@ -304,6 +305,14 @@ SrnnBP::uncondBranch(ThreadID tid, Addr pc, void *&bp_history)
     history->unconditionalBranch = true;
 
     DPRINTF(SrnnBPDB, "Exiting unconditional Branch\r\n");
+}
+
+void
+MultiperspectivePerceptron::squash(ThreadID tid, void *bp_history)
+{
+    assert(bp_history);
+    MPPBranchInfo *bi = static_cast<MPPBranchInfo*>(bp_history);
+    delete bi;
 }
 
 } // namespace branch_prediction

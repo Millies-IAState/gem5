@@ -70,7 +70,7 @@ class SrnnBP : public BPredUnit
     SrnnBP(const SrnnBPParams &params);
 
     /** Called on an unconditional branch execution. */
-    virtual void uncondBranch(ThreadID tid, Addr pc, void * &bp_history);
+    virtual void uncondBranch(ThreadID tid, Addr pc, void * &bp_history) override;
 
     /**
      * Looks up the given address in the branch predictor and returns
@@ -79,7 +79,7 @@ class SrnnBP : public BPredUnit
      * @param bp_history Pointer to any bp history state.
      * @return Whether or not the branch is taken.
      */
-    bool lookup(ThreadID tid, Addr branch_addr, void * &bp_history);
+    bool lookup(ThreadID tid, Addr branch_addr, void * &bp_history) override;
 
     /**
      * Updates the branch predictor to Not Taken if a BTB entry is
@@ -88,7 +88,7 @@ class SrnnBP : public BPredUnit
      * @param bp_history Pointer to any bp history state.
      * @return Whether or not the branch is taken.
      */
-    void btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history);
+    void btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history) override;
 
     /**
      * Updates the branch predictor with the actual result of a branch.
@@ -96,10 +96,9 @@ class SrnnBP : public BPredUnit
      * @param taken Whether or not the branch was taken.
      */
     void update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
-                bool squashed, const StaticInstPtr & inst, Addr corrTarget);
+                bool squashed, const StaticInstPtr & inst, Addr corrTarget) override;
 
-    void squash(ThreadID tid, void *bp_history)
-    { assert(bp_history == NULL); }
+    void squash(ThreadID tid, void *bp_history) override
 
   private:
   class BPHistory
