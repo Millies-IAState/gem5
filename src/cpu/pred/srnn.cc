@@ -211,18 +211,18 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
     assert(bp_history);
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    DPRINTF(SrnnBPDB, "Entering If\r\n");
-    if (history->unconditionalBranch) {
-        delete history;
-        return;
-    }
-
     DPRINTF(SrnnBPDB, "Entering squashed\r\n");
     // If the taken value was invalid, restore the GHR and commit the correct value.
     if (squashed) {
         unsigned takenValue = (taken) ? 1 : 0;
         GHR = (history->globalHistoryReg << 1) | takenValue;
             return;
+    }
+
+    DPRINTF(SrnnBPDB, "Entering If\r\n");
+    if (history->unconditionalBranch) {
+        delete history;
+        return;
     }
 
     updatePHT(branch_addr, bp_history, taken);
