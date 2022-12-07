@@ -148,6 +148,8 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
 int32_t
 SrnnBP::generateRandomInt()
 {
+    long now = time(NULL);
+    DPRINTF(SrnnBPDBInit, "now %lli\r\n", now);
     srand(time(NULL)); //Initialize Random Seed.
     int32_t returnValue = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
@@ -161,6 +163,8 @@ SrnnBP::generateRandomInt()
 uint32_t
 SrnnBP::generateRandomUnsignedInt()
 {
+    long now = time(NULL);
+    DPRINTF(SrnnBPDBInit, "now %lli\r\n", now);
     srand(time(NULL)); //Initialize Random Seed.
     uint32_t returnValue = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
