@@ -33,6 +33,7 @@
 #include "base/trace.hh"
 #include "debug/Fetch.hh"
 #include "debug/SrnnBPDB.hh"
+#include "debug/SrnnBPDBInit.hh"
 
 #include <stdlib.h> // rand
 #include <time.h> // time
