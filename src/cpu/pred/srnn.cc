@@ -112,7 +112,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     GHR = generateRandomInt();
 
     
-    DPRINTF(SrnnBPDBInit, "Weight Offset %lli\r\n", (((uint32_t)weightMax) * 2));
+    DPRINTF(SrnnBPDBInit, "Weight Offset %lli\r\n", (weightMax + weightMax));
 
     int32_t randW, randU;
     //Initialize Random Weights
@@ -127,10 +127,15 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
                 randW = generateRandomInt();
                 randU = generateRandomInt();
             }
+            else if(localPHTBits == INT_BIT_COUNT - 1)
+            {
+                randW = (generateRandomUnsignedInt() % (INT32_MAX)) - weightMin;
+                randU = (generateRandomUnsignedInt() % (INT32_MAX)) - weightMin;
+            }
             else
             {
-                randW = (generateRandomUnsignedInt() % (((uint32_t)weightMax) * 2)) - weightMin;
-                randU = (generateRandomUnsignedInt() % (((uint32_t)weightMax) * 2)) - weightMin;
+                randW = (generateRandomUnsignedInt() % (weightMax + weightMax)) - weightMin;
+                randU = (generateRandomUnsignedInt() % (weightMax + weightMax)) - weightMin;
             }
 
             DPRINTF(SrnnBPDB, "Indexing W and U: %i\r\n",j);
