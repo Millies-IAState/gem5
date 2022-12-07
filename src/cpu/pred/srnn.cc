@@ -36,6 +36,7 @@
 
 #include <stdlib.h> // rand
 #include <time.h> // time
+#include <math.h> //pow
 
 namespace gem5
 {
@@ -44,59 +45,89 @@ namespace branch_prediction
 {
 
 #define UNSIGNED_BIT_COUNT 32
+#define INT_BIT_COUNT 32
 #define GHR_LENGTH UNSIGNED_BIT_COUNT
 #define U8_BIT_COUNT 8
 #define BYTES_PER_INT 4
 #define U8_MAX 0xFF
-#define WEIGHT_MAX 15
-#define WEIGHT_MIN -15
-#define WEIGHT_MOD (WEIGHT_MAX + WEIGHT_MAX + 1)
 #define PHT_U_COUNT_OFFSET 1
+#define PHT_U_UPDATE_VALUE 1
+#define PHT_BITS_TO_VALUE_OFFSET 1
 #define update_thresh 10
 #define u_index 0
+#define MAX_GHR_SIZE UNSIGNED_BIT_COUNT
+#define MAX_PHT_BITS 32
+#define SIGNED_INT_32_MAX = 4294967295
+#define SIGNED_INT_32_MIN = -4294967294
 
 SrnnBP::SrnnBP(const SrnnBPParams &params)
     : BPredUnit(params),
       localGHRSize(GHR_LENGTH), //Constant 32 Bit GHR for now
       localPHTSize(params.localPHTSize), //Number of PHT Rows (Each row has GHRSize w and u weights)
       localPHTUpdateWeight(params.localPHTUpdateWeight),
+      localPHTBits(params.localPHTBits),
       PHT_w(localPHTSize),
       PHT_u(localPHTSize)
 {
     DPRINTF(SrnnBPDB, "localGHRSize %u\r\n",localGHRSize);
     DPRINTF(SrnnBPDB, "localPHTSize %u\r\n",localPHTSize);
     DPRINTF(SrnnBPDB, "localPHTUpdateWeight %u\r\n", localPHTUpdateWeight);
+    DPRINTF(SrnnBPDB, "localPHTBits %u\r\n", localPHTBits);
 
-    if (!isPowerOf2(localGHRSize) || (localGHRSize > 32)) {
+    if (!isPowerOf2(localGHRSize) || (localGHRSize > MAX_GHR_SIZE)) {
         fatal("Invalid GHR size! Must be power of 2 and 32 or less\n");
     }
 
     if (!isPowerOf2(localPHTSize)) {
         fatal("Invalid PHT size! Must be power of 2\n");
     }
-    firstPrediction = false;
+
+    if (localPHTBits > MAX_PHT_BITS) {
+        fatal("Invalid PHT precision cannot be higher than 32 bits.\n");
+    }
+
+    srand(time(NULL)); //Initialize Radom Seed.
+
+    if(localPHTBits == INT_BIT_COUNT)
+    {
+        weightMax = SIGNED_INT_32_MAX;
+        weightMin = SIGNED_INT_32_MIN;
+    }
+    else
+    {
+        weightMax = (int32_t) pow((double)2.0, (double)localPHTBits);
+        weightMin = -1 * (weightMax - PHT_BITS_TO_VALUE_OFFSET);
+    }
+
+    DPRINTF(SrnnBPDB, "weightMax %lli\r\n", weightMax);
+    DPRINTF(SrnnBPDB, "weightMin %lli\r\n", weightMin);
+    
+
     /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
      * As the PHT is indexed 0 to size - 1, this should be the valid mask.
     */
     PHT_index_mask = localPHTSize - 1;
     //Generate a random set of GHR Bits
-    GHR = 0;
-    for(size_t i = 0; i < BYTES_PER_INT; i++)
-    {
-        GHR = GHR | ((unsigned)rand() & U8_MAX);
-        GHR = GHR << U8_BIT_COUNT;
-    }
-    GHR = GHR | ((unsigned)rand() & U8_MAX);
-    srand(time(NULL));
+    GHR = generateRandomInt();
+
+    int32_t randW, randU;
     //Initialize Random Weights
     for(size_t i = 0; i < localPHTSize; i++)
     {
         DPRINTF(SrnnBPDB, "Indexing PHT: %i\r\n",i);
         for (size_t j = 0; j < localGHRSize; j++)
         {
-            //Setup rand seed
-            int32_t randW = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
-            int32_t randU = (rand() % WEIGHT_MOD) - WEIGHT_MAX;
+            
+            if(localPHTBits == INT_BIT_COUNT)
+            {
+                randW = generateRandomInt();
+                randU = generateRandomInt();
+            }
+            else
+            {
+                randW = (generateRandomUnsignedInt % (((uint32_t)weightMax) * 2)) - weightMin;
+                randU = (generateRandomUnsignedInt % (((uint32_t)weightMax) * 2)) - weightMin;
+            }
 
             DPRINTF(SrnnBPDB, "Indexing W and U: %i\r\n",j);
             DPRINTF(SrnnBPDB, "Adding Random U Value %li\r\n",randU);
@@ -108,6 +139,30 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
         }
         DPRINTF(SrnnBPDB, "\r\n");
     }
+}
+
+int32_t
+SrnnBP::generateRandomInt()
+{
+    int32_t returnValue = 0;
+    for(size_t i = 0; i < BYTES_PER_INT; i++)
+    {
+        returnValue = returnValue | ((unsigned)rand() & U8_MAX);
+        returnValue = returnValue << U8_BIT_COUNT;
+    }
+    return returnValue;
+}
+
+uint32_t
+SrnnBP::generateRandomUnsignedInt()
+{
+    uint32_t returnValue = 0;
+    for(size_t i = 0; i < BYTES_PER_INT; i++)
+    {
+        returnValue = returnValue | ((unsigned)rand() & U8_MAX);
+        returnValue = returnValue << U8_BIT_COUNT;
+    }
+    return returnValue;
 }
 
 void
@@ -198,7 +253,6 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     //Update the GHR based on the taken value or not.
     GHR = (GHR << 1) | takenValue;
     DPRINTF(SrnnBPDB, "Exiting Lookup\r\n");
-    firstPrediction = true;
     return taken;
     
 }
@@ -260,29 +314,37 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
             /** Check if the GHR and Prediction were equal, and we can improve the weights */
             if((((GHR >> i) & 0x01) > 0) == (history->prediction))
             {
-                if(weights[i] < WEIGHT_MAX)
+                if(weights[i] < weightMax)
                 {
                     /** If Equal, improve the weight*/
                     weights[i] = weights[i] + localPHTUpdateWeight;
                 }
                 /** There is one less u variable than w variables. */
-                if((i < localGHRSize - PHT_U_COUNT_OFFSET) && (uValues[i] < WEIGHT_MAX))
+                if((i < localGHRSize - PHT_U_COUNT_OFFSET) && (uValues[i] < weightMax))
                 {
-                    uValues[i] = uValues[i] + localPHTUpdateWeight;
+                    uValues[i] = uValues[i] + PHT_U_UPDATE_VALUE;
                 }
             }
             else //The prodiction was wrong
             {
-                if(weights[i] > WEIGHT_MIN)
+                if(weights[i] > weightMin)
                 {
                     /** If not equal, don't improve the weight.*/
                     weights[i] = weights[i] - localPHTUpdateWeight;
                 }
                 //Again, one fewer u value
-                if((i < (localGHRSize - PHT_U_COUNT_OFFSET)) && (uValues[i] < WEIGHT_MAX))
+                if((i < (localGHRSize - PHT_U_COUNT_OFFSET)) && (uValues[i] < weightMax))
                 {
                     uValues[i] = 1;
                 }
+            }
+            if(weights[i] > weightMax)
+            {
+                weights[i] = weightMax;
+            }
+            else if(weights[i] < weightMin)
+            {
+                weight[i] = weightMin;
             }
         }
     }

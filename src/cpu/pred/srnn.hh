@@ -120,6 +120,9 @@ class SrnnBP : public BPredUnit
       bool unconditionalBranch;
 
     };
+    
+    int32_t SrnnBP::generateRandomInt();
+    uint32_t SrnnBP::generateRandomUnsignedInt();
 
     /** Updates the GHR Register*/
     void updateGHR(bool taken);
@@ -147,7 +150,14 @@ class SrnnBP : public BPredUnit
     /** PHT U Values*/
     std::vector<std::vector<int32_t>> PHT_u;
 
-    bool firstPrediction;
+    /** Number of PHT Precision Bits*/
+    unsigned localPHTBits;
+
+    /** Max Weight */
+    int32_t weightMax;
+
+    /** Min Weight*/
+    int32_t weightMin;
 };
 
 } // namespace branch_prediction
