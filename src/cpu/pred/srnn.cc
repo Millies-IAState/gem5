@@ -69,10 +69,10 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
       PHT_u(localPHTSize),
       localPHTBits(params.localPHTBits)
 {
-    DPRINTF(SrnnBPDB, "localGHRSize %u\r\n",localGHRSize);
-    DPRINTF(SrnnBPDB, "localPHTSize %u\r\n",localPHTSize);
-    DPRINTF(SrnnBPDB, "localPHTUpdateWeight %u\r\n", localPHTUpdateWeight);
-    DPRINTF(SrnnBPDB, "localPHTBits %u\r\n", localPHTBits);
+    DPRINTF(SrnnBPDBInit, "localGHRSize %u\r\n",localGHRSize);
+    DPRINTF(SrnnBPDBInit, "localPHTSize %u\r\n",localPHTSize);
+    DPRINTF(SrnnBPDBInit, "localPHTUpdateWeight %u\r\n", localPHTUpdateWeight);
+    DPRINTF(SrnnBPDBInit, "localPHTBits %u\r\n", localPHTBits);
 
     if (!isPowerOf2(localGHRSize) || (localGHRSize > MAX_GHR_SIZE)) {
         fatal("Invalid GHR size! Must be power of 2 and 32 or less\n");
@@ -99,8 +99,8 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
         weightMin = -1 * (weightMax - PHT_BITS_TO_VALUE_OFFSET);
     }
 
-    DPRINTF(SrnnBPDB, "weightMax %lli\r\n", weightMax);
-    DPRINTF(SrnnBPDB, "weightMin %lli\r\n", weightMin);
+    DPRINTF(SrnnBPDBInit, "weightMax %lli\r\n", weightMax);
+    DPRINTF(SrnnBPDBInit, "weightMin %lli\r\n", weightMin);
     
 
     /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
@@ -109,6 +109,9 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     PHT_index_mask = localPHTSize - 1;
     //Generate a random set of GHR Bits
     GHR = generateRandomInt();
+
+    
+    DPRINTF(SrnnBPDBInit, "Weight Offset %lli\r\n", (((uint32_t)weightMax) * 2));
 
     int32_t randW, randU;
     //Initialize Random Weights
