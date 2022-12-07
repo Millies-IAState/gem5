@@ -103,7 +103,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     DPRINTF(SrnnBPDBInit, "weightMax %lli\r\n", weightMax);
     DPRINTF(SrnnBPDBInit, "weightMin %lli\r\n", weightMin);
     
-
+    srand(time(NULL)); //Initialize Random Seed.
     /** GHR must be a power of 2, so reducing the value by one should populate the lower bits.
      * As the PHT is indexed 0 to size - 1, this should be the valid mask.
     */
@@ -148,30 +148,26 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
 int32_t
 SrnnBP::generateRandomInt()
 {
-    long now = time(NULL);
-    DPRINTF(SrnnBPDBInit, "now %lli\r\n", now);
-    srand(time(NULL)); //Initialize Random Seed.
     int32_t returnValue = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
     {
         returnValue = returnValue | ((unsigned)rand() & U8_MAX);
         returnValue = returnValue << U8_BIT_COUNT;
     }
+    DPRINTF(SrnnBPDBInit, "Random Int %lli\r\n", returnValue);
     return returnValue;
 }
 
 uint32_t
 SrnnBP::generateRandomUnsignedInt()
 {
-    long now = time(NULL);
-    DPRINTF(SrnnBPDBInit, "now %lli\r\n", now);
-    srand(time(NULL)); //Initialize Random Seed.
     uint32_t returnValue = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
     {
         returnValue = returnValue | ((unsigned)rand() & U8_MAX);
         returnValue = returnValue << U8_BIT_COUNT;
     }
+    DPRINTF(SrnnBPDBInit, "Random Unsigned %llu\r\n", returnValue);
     return returnValue;
 }
 
