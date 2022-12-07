@@ -154,7 +154,7 @@ SrnnBP::generateRandomInt()
         returnValue = returnValue | ((unsigned)rand() & U8_MAX);
         returnValue = returnValue << U8_BIT_COUNT;
     }
-    DPRINTF(SrnnBPDBInit, "Random Int %lli\r\n", returnValue);
+    DPRINTF(SrnnBPDB, "Random Int %lli\r\n", returnValue);
     return returnValue;
 }
 
@@ -167,7 +167,7 @@ SrnnBP::generateRandomUnsignedInt()
         returnValue = returnValue | ((unsigned)rand() & U8_MAX);
         returnValue = returnValue << U8_BIT_COUNT;
     }
-    DPRINTF(SrnnBPDBInit, "Random Unsigned %llu\r\n", returnValue);
+    DPRINTF(SrnnBPDB, "Random Unsigned %llu\r\n", returnValue);
     return returnValue;
 }
 
