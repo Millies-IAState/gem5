@@ -129,13 +129,13 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
             }
             else if(localPHTBits == INT_BIT_COUNT - 1)
             {
-                randW = (generateRandomUnsignedInt() % (INT32_MAX)) - weightMin;
-                randU = (generateRandomUnsignedInt() % (INT32_MAX)) - weightMin;
+                randW = (generateRandomInt() % (INT32_MAX)) - weightMin;
+                randU = (generateRandomInt() % (INT32_MAX)) - weightMin;
             }
             else
             {
-                randW = (generateRandomUnsignedInt() % (weightMax + weightMax)) - weightMin;
-                randU = (generateRandomUnsignedInt() % (weightMax + weightMax)) - weightMin;
+                randW = (generateRandomInt() % (weightMax + weightMax)) - weightMin;
+                randU = (generateRandomInt() % (weightMax + weightMax)) - weightMin;
             }
 
             DPRINTF(SrnnBPDB, "Indexing W and U: %i\r\n",j);
