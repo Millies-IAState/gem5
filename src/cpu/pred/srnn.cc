@@ -87,7 +87,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
         fatal("Invalid PHT precision cannot be higher than 32 bits.\n");
     }
 
-    srand(time(NULL)); //Initialize Radom Seed.
+    
 
     if(localPHTBits == INT_BIT_COUNT)
     {
@@ -96,7 +96,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     }
     else
     {
-        weightMax = (int32_t) pow((double)2.0, (double)localPHTBits);
+        weightMax = (int32_t) pow((double)2.0, (double)localPHTBits) -1;
         weightMin = -1 * (weightMax - PHT_BITS_TO_VALUE_OFFSET);
     }
 
@@ -148,6 +148,7 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
 int32_t
 SrnnBP::generateRandomInt()
 {
+    srand(time(NULL)); //Initialize Random Seed.
     int32_t returnValue = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
     {
@@ -160,6 +161,7 @@ SrnnBP::generateRandomInt()
 uint32_t
 SrnnBP::generateRandomUnsignedInt()
 {
+    srand(time(NULL)); //Initialize Random Seed.
     uint32_t returnValue = 0;
     for(size_t i = 0; i < BYTES_PER_INT; i++)
     {
