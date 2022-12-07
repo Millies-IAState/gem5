@@ -57,8 +57,8 @@ namespace branch_prediction
 #define u_index 0
 #define MAX_GHR_SIZE UNSIGNED_BIT_COUNT
 #define MAX_PHT_BITS 32
-#define SIGNED_INT_32_MAX = 4294967295
-#define SIGNED_INT_32_MIN = -4294967294
+#define SIGNED_INT_32_MAX 4294967295
+#define SIGNED_INT_32_MIN -4294967294
 
 SrnnBP::SrnnBP(const SrnnBPParams &params)
     : BPredUnit(params),
@@ -125,8 +125,8 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
             }
             else
             {
-                randW = (generateRandomUnsignedInt % (((uint32_t)weightMax) * 2)) - weightMin;
-                randU = (generateRandomUnsignedInt % (((uint32_t)weightMax) * 2)) - weightMin;
+                randW = (generateRandomUnsignedInt() % (((uint32_t)weightMax) * 2)) - weightMin;
+                randU = (generateRandomUnsignedInt() % (((uint32_t)weightMax) * 2)) - weightMin;
             }
 
             DPRINTF(SrnnBPDB, "Indexing W and U: %i\r\n",j);
@@ -344,7 +344,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
             }
             else if(weights[i] < weightMin)
             {
-                weight[i] = weightMin;
+                weights[i] = weightMin;
             }
         }
     }

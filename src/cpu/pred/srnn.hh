@@ -121,8 +121,8 @@ class SrnnBP : public BPredUnit
 
     };
     
-    int32_t SrnnBP::generateRandomInt();
-    uint32_t SrnnBP::generateRandomUnsignedInt();
+    int32_t generateRandomInt();
+    uint32_t generateRandomUnsignedInt();
 
     /** Updates the GHR Register*/
     void updateGHR(bool taken);
