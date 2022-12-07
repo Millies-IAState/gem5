@@ -57,17 +57,17 @@ namespace branch_prediction
 #define u_index 0
 #define MAX_GHR_SIZE UNSIGNED_BIT_COUNT
 #define MAX_PHT_BITS 32
-#define SIGNED_INT_32_MAX 4294967295
-#define SIGNED_INT_32_MIN -4294967294
+#define SIGNED_INT_32_MAX 2147483647
+#define SIGNED_INT_32_MIN -2147483648
 
 SrnnBP::SrnnBP(const SrnnBPParams &params)
     : BPredUnit(params),
       localGHRSize(GHR_LENGTH), //Constant 32 Bit GHR for now
       localPHTSize(params.localPHTSize), //Number of PHT Rows (Each row has GHRSize w and u weights)
       localPHTUpdateWeight(params.localPHTUpdateWeight),
-      localPHTBits(params.localPHTBits),
       PHT_w(localPHTSize),
-      PHT_u(localPHTSize)
+      PHT_u(localPHTSize),
+      localPHTBits(params.localPHTBits)
 {
     DPRINTF(SrnnBPDB, "localGHRSize %u\r\n",localGHRSize);
     DPRINTF(SrnnBPDB, "localPHTSize %u\r\n",localPHTSize);
