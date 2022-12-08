@@ -227,8 +227,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
         {
             sValues[i] = -1 * weights[i];
         }
-        //DPRINTF(SrnnBPDB, "SValue Set: Index %li - Value: %lli\n",
-        i,sValues[i]);
+        //DPRINTF(SrnnBPDB, "SValue Set: Index %li - Value: %lli\n",i,sValues[i]);
     }
 
     int32_t sCount = GHR_LENGTH >> 1;
@@ -269,8 +268,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
     int64_t predictionValue = sValues[0];
 
-    DPRINTF(SrnnBPDB, "prediction value (Y) is %lli on address: %lli\n",
-            predictionValue,branch_addr;
+    DPRINTF(SrnnBPDB, "prediction value (Y) is %lli on address: %lli\n", predictionValue,branch_addr);
 
     taken = predictionValue > 0;
 
