@@ -203,7 +203,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     bp_history = (void *)history;
 
     DPRINTF(SrnnBPDB, "Initializing Indexes and weights\r\n");
-    uint64_t local_predictor_idx =  branch_addr >> 23; //hash(branch_addr, 5) >> PC_HASH_SHIFT;
+    uint64_t local_predictor_idx =  hash(branch_addr, 5) >> PC_HASH_SHIFT;
     DPRINTF(SrnnBPDB, "Looking up index %llu\n", local_predictor_idx);
 
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
@@ -330,7 +330,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    uint64_t local_predictor_idx =  pc >> 23; // hash(history->address, 5) >> PC_HASH_SHIFT;
+    uint64_t local_predictor_idx = hash(history->address, 5) >> PC_HASH_SHIFT;
 
 
     DPRINTF(SrnnBPDB, "Update PHT local_predictor_idx %lli\r\n",local_predictor_idx);
