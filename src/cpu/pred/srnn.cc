@@ -31,7 +31,6 @@
 #include "base/intmath.hh"
 #include "base/logging.hh"
 #include "base/trace.hh"
-#include "debug/Fetch.hh"
 #include "debug/SrnnBPDB.hh"
 #include "debug/SrnnBPDBInit.hh"
 
@@ -272,6 +271,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     taken = predictionValue > 0;
 
     history->prediction = taken;
+    history->address = branch_addr;
     history->yValue = predictionValue;
     history->globalHistoryReg = GHR;
     history->unconditionalBranch = false;
@@ -306,6 +306,8 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
         return;
     }
 
+    DPRINTF(SrnnBP, "Branch_addr: %lli, corrTarget: %lli, historyTarget: %lli, taken: %d, prediction: %d, yValue: %lli",branch_addr,corrTarget,history->address,taken,history->prediction,history->yValue);
+
     updatePHT(branch_addr, bp_history, taken);
     updateGHR(taken);    
     DPRINTF(SrnnBPDB, "Exiting Update\r\n");
@@ -327,7 +329,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    uint64_t local_predictor_idx = hashPC(pc, PC_HASH_SHIFT);
+    uint64_t local_predictor_idx = hashPC(history->address, PC_HASH_SHIFT);
 
     DPRINTF(SrnnBPDB, "Update PHT local_predictor_idx %lli\r\n",local_predictor_idx);
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
@@ -389,6 +391,7 @@ SrnnBP::uncondBranch(ThreadID tid, Addr pc, void *&bp_history)
 
     /** Some default values for unconditional branch*/
     history->prediction = true;
+    history->address = pc;
     history->yValue = 1;
     history->globalHistoryReg = GHR;
     history->unconditionalBranch = true;

@@ -145,6 +145,8 @@ class SrnnBP : public BPredUnit
       public:
       unsigned globalHistoryReg;
 
+      Addr address;
+
       /** The Result of the SRNN network
       */
       int64_t yValue;
