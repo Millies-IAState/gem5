@@ -241,6 +241,14 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
             index1, sValues[index1],index2,sValues[index2],uIndex, uValues[uIndex]);
 
             sValues[i] = (sValues[index2] + (((int64_t)uValues[uIndex]) * sValues[index1]));
+            if(sValues[i] > weightMax)
+            {
+                sValues[i] = weightMax;
+            }
+            if(sValues[i] < weightMin)
+            {
+                sValues[i] = weightMin;
+            }
 
             DPRINTF(SrnnBPDB, "%lli + (%lli * %lli) = %lli in index %li\n",sValues[index2],((int64_t)uValues[uIndex]),sValues[index1],sValues[index2],i);
             uIndex = uIndex + 1;
