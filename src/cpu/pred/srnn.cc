@@ -191,7 +191,7 @@ SrnnBP::btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history)
     DPRINTF(SrnnBPDB, "Exiting btbUpdate\r\n");
 }
 
-#define PC_HASH_SHIFT 34
+#define PC_HASH_SHIFT 23
 
 bool
 SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
@@ -203,9 +203,8 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     bp_history = (void *)history;
 
     DPRINTF(SrnnBPDB, "Initializing Indexes and weights\r\n");
-    uint64_t local_predictor_idx =  hashPC(branch_addr, PC_HASH_SHIFT);
-    DPRINTF(SrnnBPDB, "Looking up index %llu\n",
-            local_predictor_idx);
+    uint64_t local_predictor_idx =  hash(branch_addr, 5) >> PC_HASH_SHIFT;
+    DPRINTF(SrnnBPDB, "Looking up index %llu\n", local_predictor_idx);
 
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
     DPRINTF(SrnnBPDB, "Completed Weights\n");
@@ -235,8 +234,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     DPRINTF(SrnnBPDB, "Iterating internal nodes\r\n");
     while (sCount > 0)
     {
-        DPRINTF(SrnnBPDB, "sCount Loop Value:%li\n",
-            sCount);
+        //DPRINTF(SrnnBPDB, "sCount Loop Value:%li\n",sCount);
         for(size_t i = 0; i < sCount; i++)
         {
             int32_t index1 = i << 1;
@@ -332,7 +330,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    uint64_t local_predictor_idx = hashPC(history->address, PC_HASH_SHIFT);
+    uint64_t local_predictor_idx = hash(branch_addr, 5) >> PC_HASH_SHIFT;
 
 
     DPRINTF(SrnnBPDB, "Update PHT local_predictor_idx %lli\r\n",local_predictor_idx);
