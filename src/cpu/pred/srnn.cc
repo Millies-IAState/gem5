@@ -306,7 +306,7 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
         return;
     }
 
-    DPRINTF(SrnnBP, "Branch_addr: %lli, corrTarget: %lli, historyTarget: %lli, taken: %d, prediction: %d, yValue: %lli",branch_addr,corrTarget,history->address,taken,history->prediction,history->yValue);
+    DPRINTF(SrnnBPDB, "Branch_addr: %lli, corrTarget: %lli, historyTarget: %lli, taken: %d, prediction: %d, yValue: %lli",branch_addr,corrTarget,history->address,taken,history->prediction,history->yValue);
 
     updatePHT(branch_addr, bp_history, taken);
     updateGHR(taken);    
