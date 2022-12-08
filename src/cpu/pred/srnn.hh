@@ -100,6 +100,45 @@ class SrnnBP : public BPredUnit
 
     void squash(ThreadID tid, void *bp_history) override;
 
+  protected:
+  /**
+   * PC Hash functions
+   */
+  static inline unsigned int hash1(unsigned int a)
+  {
+      a = (a ^ 0xdeadbeef) + (a<<4);
+      a = a ^ (a>>10);
+      a = a + (a<<7);
+      a = a ^ (a>>13);
+      return a;
+  }
+  static inline unsigned int hash2(unsigned int key)
+  {
+      int c2 = 0x27d4eb2d; // a prime or an odd constant
+      key = (key ^ 61) ^ (key >> 16);
+      key = key + (key << 3);
+      key = key ^ (key >> 4);
+      key = key * c2;
+      key = key ^ (key >> 15);
+      return key;
+  }
+  static inline unsigned int hash(unsigned int key, unsigned int i)
+  {
+      return hash2(key) * i + hash1(key);
+  }
+  static inline unsigned int hashPC(unsigned int pc, int pcshift)
+  {
+      if (pcshift < 0) {
+          return hash(pc, -pcshift);
+      } else if (pcshift < 11) {
+          unsigned int x = pc;
+          x ^= (pc >> pcshift);
+          return x;
+      } else {
+          return pc >> (pcshift-11);
+      }
+  }
+  
   private:
   class BPHistory
     {

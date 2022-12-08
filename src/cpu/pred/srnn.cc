@@ -185,6 +185,7 @@ SrnnBP::btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history)
     DPRINTF(SrnnBPDB, "Exiting btbUpdate\r\n");
 }
 
+#define PC_HASH_SHIFT 34
 
 bool
 SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
@@ -196,7 +197,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     bp_history = (void *)history;
 
     DPRINTF(SrnnBPDB, "Initializing Indexes and weights\r\n");
-    uint64_t local_predictor_idx = (branch_addr >> 2) & PHT_index_mask;
+    uint64_t local_predictor_idx =  hashPC(branch_addr, PC_HASH_SHIFT);
     DPRINTF(SrnnBPDB, "Looking up index %llu\n",
             local_predictor_idx);
 
@@ -311,7 +312,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    uint64_t local_predictor_idx = (pc >> 2) & PHT_index_mask;
+    uint64_t local_predictor_idx = hashPC(branch_addr, PC_HASH_SHIFT);
 
     DPRINTF(SrnnBPDB, "Update PHT local_predictor_idx %lli\r\n",local_predictor_idx);
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
