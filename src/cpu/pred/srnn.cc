@@ -54,7 +54,6 @@ namespace branch_prediction
 #define PHT_U_COUNT_OFFSET 1
 #define PHT_U_UPDATE_VALUE 1
 #define PHT_BITS_TO_VALUE_OFFSET 1
-#define update_thresh 10
 #define u_index 0
 #define MAX_GHR_SIZE UNSIGNED_BIT_COUNT
 #define MAX_PHT_BITS 32
@@ -98,6 +97,14 @@ SrnnBP::SrnnBP(const SrnnBPParams &params)
     {
         weightMax = (int32_t) pow((double)2.0, (double)localPHTBits) -1;
         weightMin = -1 * (weightMax - PHT_BITS_TO_VALUE_OFFSET);
+    }
+
+    // 3/4 max weight
+    updateThreshold = (weightMax >> 1) + (weightMax >> 2);
+    if(updateThreshold == 0)
+    {
+        //Low precision issue...
+        updateThreshold = 1;
     }
 
     DPRINTF(SrnnBPDBInit, "weightMax %lli\r\n", weightMax);
@@ -327,7 +334,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
 
     DPRINTF(SrnnBPDB, "Training Check:  (%lli < %lli) or  \r\n",local_predictor_idx);
-    if((abs(history->yValue) < update_thresh) || (history->prediction != actual))
+    if((abs(history->yValue) < updateThreshold) || (history->prediction != actual))
     {
         for(size_t i = 0; i < localGHRSize; i++)
         {

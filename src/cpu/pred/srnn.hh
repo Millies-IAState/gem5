@@ -138,7 +138,7 @@ class SrnnBP : public BPredUnit
           return pc >> (pcshift-11);
       }
   }
-  
+
   private:
   class BPHistory
     {
@@ -197,6 +197,8 @@ class SrnnBP : public BPredUnit
 
     /** Min Weight*/
     int32_t weightMin;
+
+    int32_t updateThreshold
 };
 
 } // namespace branch_prediction
