@@ -245,18 +245,22 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
 
             DPRINTF(SrnnBPDB, "Inputs S - Index1: %li Value1: %lli Index2: %li Value2: %lli, U - Index: %li Value: %lli\n",
             index1, sValues[index1],index2,sValues[index2],uIndex, uValues[uIndex]);
+            DPRINTF(SrnnBPDB, "%lli + (%lli * %lli) = ",sValues[index2], Values[uIndex], sValues[index1]);
 
             sValues[i] = (sValues[index2] + (((int64_t)uValues[uIndex]) * sValues[index1]));
+            DPRINTF(SrnnBPDB, "%lli in index %li\n",sValues[index1],i);
             if(sValues[i] > weightMax)
             {
                 sValues[i] = weightMax;
+                DPRINTF(SrnnBPDB, "Y Trimmed to %lli\n",sValues[i]);
             }
             if(sValues[i] < weightMin)
             {
                 sValues[i] = weightMin;
+                DPRINTF(SrnnBPDB, "Y Trimmed to %lli\n",sValues[i]);
             }
 
-            DPRINTF(SrnnBPDB, "%lli + (%lli * %lli) = %lli in index %li\n",sValues[index2],((int64_t)uValues[uIndex]),sValues[index1],sValues[index2],i);
+            
             uIndex = uIndex + 1;
         }
         sCount = sCount >> 1;
@@ -306,7 +310,7 @@ SrnnBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
         return;
     }
 
-    DPRINTF(SrnnBPDB, "Branch_addr: %lli, corrTarget: %lli, historyTarget: %lli, taken: %d, prediction: %d, yValue: %lli",branch_addr,corrTarget,history->address,taken,history->prediction,history->yValue);
+    DPRINTF(SrnnBPDB, "Branch_addr: %lli, corrTarget: %lli, historyTarget: %lli, taken: %d, prediction: %d, yValue: %lli\n",branch_addr,corrTarget,history->address,taken,history->prediction,history->yValue);
 
     updatePHT(branch_addr, bp_history, taken);
     updateGHR(taken);    
