@@ -320,7 +320,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
     DPRINTF(SrnnBPDB, "Entering updatePHT\r\n");
     BPHistory *history = static_cast<BPHistory*>(bp_history);
 
-    uint64_t local_predictor_idx = hashPC(branch_addr, PC_HASH_SHIFT);
+    uint64_t local_predictor_idx = hashPC(pc, PC_HASH_SHIFT);
 
     DPRINTF(SrnnBPDB, "Update PHT local_predictor_idx %lli\r\n",local_predictor_idx);
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
