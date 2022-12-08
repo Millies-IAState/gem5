@@ -242,8 +242,7 @@ SrnnBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
             int32_t index1 = i << 1;
             int32_t index2 = index1 + 1;
 
-            //DPRINTF(SrnnBPDB, "Inputs S - Index1: %li Value1: %lli Index2: %li Value2: %lli, U - Index: %li Value: %lli\n",
-            index1, sValues[index1],index2,sValues[index2],uIndex, uValues[uIndex]);
+            //DPRINTF(SrnnBPDB, "Inputs S - Index1: %li Value1: %lli Index2: %li Value2: %lli, U - Index: %li Value: %lli\n",index1, sValues[index1],index2,sValues[index2],uIndex, uValues[uIndex]);
             //DPRINTF(SrnnBPDB, "%lli + (%lli * %lli) = ",sValues[index2], uValues[uIndex], sValues[index1]);
 
             sValues[i] = (sValues[index2] + (((int64_t)uValues[uIndex]) * sValues[index1]));
