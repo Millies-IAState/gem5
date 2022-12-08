@@ -335,11 +335,12 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
 
     uint64_t local_predictor_idx = hashPC(history->address, PC_HASH_SHIFT);
 
+
     DPRINTF(SrnnBPDB, "Update PHT local_predictor_idx %lli\r\n",local_predictor_idx);
     std::vector<int32_t> weights = PHT_w[local_predictor_idx];
     std::vector<int32_t> uValues = PHT_u[local_predictor_idx];
 
-    DPRINTF(SrnnBPDB, "Training Check:  (%lli < %lli) or  \r\n",local_predictor_idx);
+    DPRINTF(SrnnBPDB, "Training Check:  (yValue:%lli < Threshold:%lli) or (Predict:%d = Actual:%d)\r\n",abs(history->yValue),updateThreshold,history->prediction,actual);
     if((abs(history->yValue) < updateThreshold) || (history->prediction != actual))
     {
         for(size_t i = 0; i < localGHRSize; i++)
@@ -381,6 +382,7 @@ SrnnBP::updatePHT(Addr pc, void *bp_history, bool actual)
             }
         }
     }
+
     DPRINTF(SrnnBPDB, "Exiting updatePHT\r\n");
     delete history;
 }
