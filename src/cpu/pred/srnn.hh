@@ -70,7 +70,7 @@ class SrnnBP : public BPredUnit
     SrnnBP(const SrnnBPParams &params);
 
     /** Called on an unconditional branch execution. */
-    virtual void uncondBranch(ThreadID tid, Addr pc, void * &bp_history);
+    virtual void uncondBranch(ThreadID tid, Addr pc, void * &bp_history) override;
 
     /**
      * Looks up the given address in the branch predictor and returns
@@ -79,7 +79,7 @@ class SrnnBP : public BPredUnit
      * @param bp_history Pointer to any bp history state.
      * @return Whether or not the branch is taken.
      */
-    bool lookup(ThreadID tid, Addr branch_addr, void * &bp_history);
+    bool lookup(ThreadID tid, Addr branch_addr, void * &bp_history) override;
 
     /**
      * Updates the branch predictor to Not Taken if a BTB entry is
@@ -88,7 +88,7 @@ class SrnnBP : public BPredUnit
      * @param bp_history Pointer to any bp history state.
      * @return Whether or not the branch is taken.
      */
-    void btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history);
+    void btbUpdate(ThreadID tid, Addr branch_addr, void * &bp_history) override;
 
     /**
      * Updates the branch predictor with the actual result of a branch.
@@ -96,16 +96,56 @@ class SrnnBP : public BPredUnit
      * @param taken Whether or not the branch was taken.
      */
     void update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
-                bool squashed, const StaticInstPtr & inst, Addr corrTarget);
+                bool squashed, const StaticInstPtr & inst, Addr corrTarget) override;
 
-    void squash(ThreadID tid, void *bp_history)
-    { assert(bp_history == NULL); }
+    void squash(ThreadID tid, void *bp_history) override;
+
+  protected:
+  /**
+   * PC Hash functions
+   */
+  static inline unsigned int hash1(unsigned int a)
+  {
+      a = (a ^ 0xdeadbeef) + (a<<4);
+      a = a ^ (a>>10);
+      a = a + (a<<7);
+      a = a ^ (a>>13);
+      return a;
+  }
+  static inline unsigned int hash2(unsigned int key)
+  {
+      int c2 = 0x27d4eb2d; // a prime or an odd constant
+      key = (key ^ 61) ^ (key >> 16);
+      key = key + (key << 3);
+      key = key ^ (key >> 4);
+      key = key * c2;
+      key = key ^ (key >> 15);
+      return key;
+  }
+  static inline unsigned int hash(unsigned int key, unsigned int i)
+  {
+      return hash2(key) * i + hash1(key);
+  }
+  static inline unsigned int hashPC(unsigned int pc, int pcshift)
+  {
+      if (pcshift < 0) {
+          return hash(pc, -pcshift);
+      } else if (pcshift < 11) {
+          unsigned int x = pc;
+          x ^= (pc >> pcshift);
+          return x;
+      } else {
+          return pc >> (pcshift-11);
+      }
+  }
 
   private:
   class BPHistory
     {
       public:
       unsigned globalHistoryReg;
+
+      Addr address;
 
       /** The Result of the SRNN network
       */
@@ -121,6 +161,9 @@ class SrnnBP : public BPredUnit
       bool unconditionalBranch;
 
     };
+    
+    int32_t generateRandomInt();
+    uint32_t generateRandomUnsignedInt();
 
     /** Updates the GHR Register*/
     void updateGHR(bool taken);
@@ -148,7 +191,16 @@ class SrnnBP : public BPredUnit
     /** PHT U Values*/
     std::vector<std::vector<int32_t>> PHT_u;
 
-    bool firstPrediction;
+    /** Number of PHT Precision Bits*/
+    unsigned localPHTBits;
+
+    /** Max Weight */
+    int32_t weightMax;
+
+    /** Min Weight*/
+    int32_t weightMin;
+
+    int32_t updateThreshold;
 };
 
 } // namespace branch_prediction

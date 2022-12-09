@@ -49,6 +49,7 @@ SimObject('BranchPredictor.py', sim_objects=[
 
 DebugFlag('Indirect')
 DebugFlag('SrnnBPDB')
+DebugFlag('SrnnBPDBInit')
 Source('bpred_unit.cc')
 Source('2bit_local.cc')
 Source('btb.cc')
