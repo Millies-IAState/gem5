@@ -108,7 +108,7 @@ LocalBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
 
     // Update the local predictor.
     local_predictor_idx = getLocalIndex(branch_addr);
-    unit8_t debugValue = localCtrs[local_predictor_idx];
+    uint8_t debugValue = localCtrs[local_predictor_idx];
 
     DPRINTF(Fetch, "Looking up index %#x.. Value: %u...#\n", local_predictor_idx, debugValue);
 
