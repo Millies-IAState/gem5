@@ -67,6 +67,14 @@ class BranchPredictor(SimObject):
     indirectBranchPred = Param.IndirectPredictor(SimpleIndirectPredictor(),
       "Indirect branch predictor, set to NULL to disable indirect predictions")
 
+class GShareBP(BranchPredictor):
+    type = 'GShareBP'
+    cxx_class = 'gem5::branch_prediction::GShareBP'
+    cxx_header = "cpu/pred/gshare.hh"
+
+    localPredictorSize = Param.Unsigned(1024, "Size of local predictor")
+    localCtrBits = Param.Unsigned(2, "Bits per counter")
+
 class LocalBP(BranchPredictor):
     type = 'LocalBP'
     cxx_class = 'gem5::branch_prediction::LocalBP'
