@@ -109,15 +109,16 @@ LocalBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
     // Update the local predictor.
     local_predictor_idx = getLocalIndex(branch_addr);
 
-    DPRINTF(Fetch, "Looking up index %#x\n", local_predictor_idx);
+    DPRINTF(Fetch, "Looking up index %#x.. Value: %u...#\n", local_predictor_idx, localCtrs[local_predictor_idx]);
 
     if (taken) {
-        DPRINTF(Fetch, "Branch updated as taken.\n");
+        DPRINTF(Fetch, "Branch updated as taken. Increasing if not saturated...\n");
         localCtrs[local_predictor_idx]++;
     } else {
-        DPRINTF(Fetch, "Branch updated as not taken.\n");
+        DPRINTF(Fetch, "Branch updated as not taken. Decreasing if not saturated...\n");
         localCtrs[local_predictor_idx]--;
     }
+    DPRINTF(Fetch, "Prediction at Index %#x.. Updated Value: %u...#\n", local_predictor_idx, localCtrs[local_predictor_idx]);
 }
 
 inline

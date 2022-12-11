@@ -174,7 +174,10 @@ system.cpu = X86O3CPU( issueWidth = 10,
                 LQEntries = 64,
                 SQEntries = 64,
                 numPhysIntRegs = 192,
-                numPhysFloatRegs = 192)
+                numPhysFloatRegs = 192,
+                branchPred = LocalBP(
+                    localCtrBits = 1
+                ))
                 
 
 if numThreads > 1:
@@ -238,14 +241,14 @@ for i in range(np):
     if args.checker:
         system.cpu[i].addCheckerCpu()
 
-    if args.bp_type:
-        bpClass = ObjectList.bp_list.get(args.bp_type)
-        system.cpu[i].branchPred = bpClass()
+    #if args.bp_type:
+        #bpClass = ObjectList.bp_list.get(args.bp_type)
+        #system.cpu[i].branchPred = bpClass()
 
-    if args.indirect_bp_type:
-        indirectBPClass = \
-            ObjectList.indirect_bp_list.get(args.indirect_bp_type)
-        system.cpu[i].branchPred.indirectBranchPred = indirectBPClass()
+    #if args.indirect_bp_type:
+        #indirectBPClass = \
+            #ObjectList.indirect_bp_list.get(args.indirect_bp_type)
+        #system.cpu[i].branchPred.indirectBranchPred = indirectBPClass()
 
     system.cpu[i].createThreads()
 
