@@ -69,14 +69,15 @@ GShareBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     unsigned tableIndex = calcLocHistIdx(tid, branch_addr);
     assert(tableIndex < localPredictorSize);
 
-    bool prediction = getPrediction((uint8_t)localCtrs[tableIndex]);
+    uint8_t predictionValue = localCtrs[tableIndex];
+    bool prediction = getPrediction(predictionValue);
 
     BPHistory *history = new BPHistory;
     history->globalHistory = globalHistory[tid];
     history->prediction = prediction;
     bp_history = static_cast<void*>(history);
     updateGlobalHistory(tid,true);
-    return prediction  ;
+    return prediction;
 }
 
 /**
@@ -140,7 +141,7 @@ GShareBP::uncondBranch(ThreadID tid, Addr pc, void *&bp_history)
     history->prediction = true;
 
     bp_history = static_cast<void*>(history);
-    updateGlobalHistory(true);
+    updateGlobalHistory(tid, true);
     return;
 }
 
