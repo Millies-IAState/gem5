@@ -69,14 +69,14 @@ GShareBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     unsigned tableIndex = calcLocHistIdx(tid, branch_addr);
     assert(tableIndex < localPredictorSize);
 
-    bool prediction = getPrediction(localCtrs[tableIndex]);
+    bool prediction = getPrediction((uint8_t)localCtrs[tableIndex]);
 
     BPHistory *history = new BPHistory;
     history->globalHistory = globalHistory[tid];
     history->prediction = prediction;
     bp_history = static_cast<void*>(history);
-    updateGlobalHistory(true);
-    return predict;
+    updateGlobalHistory(tid,true);
+    return prediction  ;
 }
 
 /**
@@ -109,7 +109,7 @@ GShareBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
             if(taken) { globalHistory[tid] |= 1; }
             globalHistory[tid] &= globalHistoryMask;
         }
-        
+
         delete history;
     }
 }
