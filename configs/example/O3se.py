@@ -175,8 +175,8 @@ system.cpu = X86O3CPU( issueWidth = 10,
                 SQEntries = 64,
                 numPhysIntRegs = 192,
                 numPhysFloatRegs = 192,
-                branchPred = LocalBP(
-                    localCtrBits = 1
+                branchPred = GShareBP(
+                    localCtrBits = 2
                 ))
                 
 
