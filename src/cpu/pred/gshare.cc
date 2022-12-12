@@ -122,8 +122,10 @@ GShareBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
             if(taken) { globalHistory[tid] |= 1; }
             globalHistory[tid] &= globalHistoryMask;
         }
-
-        delete history;
+        else
+        {
+            delete history;
+        }
     }
 }
 
