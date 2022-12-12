@@ -66,7 +66,7 @@ class GShareBP : public BPredUnit
                 bool squashed, const StaticInstPtr & inst, Addr corrTarget);
 
     void squash(ThreadID tid, void *bp_history)
-    { assert(bp_history == NULL); }
+    { } //assert(bp_history == NULL); }
 
   private:
     /**
