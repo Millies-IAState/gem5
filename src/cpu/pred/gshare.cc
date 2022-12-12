@@ -37,7 +37,14 @@ GShareBP::GShareBP(const GShareBPParams &params)
     globalHistoryMask = mask(this->globalHistoryBits);
     localPredictorMask = mask(localPredictorBits);
     localThreshold  = (1ULL << (localCtrBits  - 1)) - 1;
-}
+
+    DPRINTF(Fetch, "GHR Mask: %li\n",
+            globalHistoryMask);
+    DPRINTF(Fetch, "Local Predictor Mask: %li\n",
+            localPredictorMask);
+    DPRINTF(Fetch, "Local Threshold: %lu\n",
+            localThreshold);
+    }
 
 /**
 * If a branch is not taken, because the BTB address is invalid or missing,
@@ -72,6 +79,8 @@ GShareBP::lookup(ThreadID tid, Addr branch_addr, void * &bp_history)
     uint8_t predictionValue = localCtrs[tableIndex];
     bool prediction = getPrediction(predictionValue);
 
+    DPRINTF(Fetch, "Prediction at Index %#x, Value: %u, Taken?:%i.\n", tableIndex, predictionValue, prediction);
+
     BPHistory *history = new BPHistory;
     history->globalHistory = globalHistory[tid];
     history->prediction = prediction;
@@ -100,9 +109,12 @@ GShareBP::update(ThreadID tid, Addr branch_addr, bool taken, void *bp_history,
         BPHistory *history = static_cast<BPHistory *>(bp_history);
         unsigned tableIndex = calcLocHistIdx(tid, branch_addr);
         assert(tableIndex < localPredictorSize);
+        uint8_t tableValue = localCtrs[tableIndex];
 
+        DPRINTF(Fetch, "Prediction before update Index %#x, Value: %u, Taken?:%i.\n", tableIndex, tableValue, taken);
         if(taken) { localCtrs[tableIndex]++; }
         else { localCtrs[tableIndex]--; }
+        DPRINTF(Fetch, "Prediction after update Index %#x, Value: %u.\n", tableIndex, tableValue);
 
         if(squashed)
         {
